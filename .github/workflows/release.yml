@@ -29,6 +29,8 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: uv sync --locked
+      - name: Check that the tag matches the package version
+        run: test "v$(uv version --short)" = "$GITHUB_REF_NAME"
       - name: Build the wheel and sdist
         run: uv build
       - name: Upload the distributions
@@ -92,14 +94,19 @@ jobs:
         with:
           enable-cache: true
           python-version: "3.12"
-      - name: Download the distributions and data artifact
+      - name: Download the distributions
         uses: actions/download-artifact@v8
         with:
+          name: distributions
           path: dist
-          merge-multiple: true
+      - name: Download the data artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: data-artifact
+          path: dist
       - name: Generate release notes from Conventional Commits
         run: uvx git-cliff --latest --strip header -o RELEASE_NOTES.md
       - name: Write checksums
-        run: sha256sum dist/* > SHA256SUMS
+        run: (cd dist && sha256sum -- *) > SHA256SUMS
       - name: Create the GitHub release
         run: gh release create "$GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md dist/* SHA256SUMS
