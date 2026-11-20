@@ -664,6 +664,7 @@
     initTheme();
     var page = document.body.getAttribute("data-page") || "";
     var renderers = {
+      index: renderOverview,
       overview: renderOverview,
       tax: renderTax,
       prices: renderPrices,
