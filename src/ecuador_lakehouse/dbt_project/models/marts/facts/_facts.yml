@@ -1,0 +1,218 @@
+version: 2
+
+models:
+  - name: fct_tax_collection
+    description: >
+      Incremental tax-collection fact at month x tax-item version x taxpayer
+      type x geography grain, point-in-time joined to the SCD2 dimension.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: period_year
+        description: Collection year (incremental partition key).
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: period_month
+        description: Collection month number (1-12).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: period_date
+        description: First day of the collection month.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: tax_item_key
+        description: SCD2 tax-item version valid at the collection year.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_tax_item')
+                field: tax_item_key
+      - name: tax_item_nk
+        description: Natural key of the tax line.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: taxpayer_type
+        description: Normalized taxpayer type.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["SOCIEDADES", "PERSONAS NATURALES", "NO TIENE"]
+      - name: geography_key
+        description: Province/canton geography of the collection.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_geography')
+                field: geography_key
+      - name: collected_usd
+        description: Collected amount in USD.
+        data_type: "decimal(18,2)"
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: _batch_id
+        description: Batch identifier of the raw partition that produced the row.
+        data_type: varchar
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - period_date
+              - tax_item_key
+              - taxpayer_type
+              - geography_key
+
+  - name: fct_cpi_index
+    description: >
+      CPI fact at month x price-area x CCIF-item grain, carrying the published
+      index value and the item weight.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: period_date
+        description: First day of the CPI month.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: period_year
+        description: CPI year.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: period_month
+        description: CPI month number (1-12).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: price_area_key
+        description: Price area of the observation.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_price_area')
+                field: price_area_key
+      - name: cpi_item_key
+        description: CCIF item of the observation.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_cpi_item')
+                field: cpi_item_key
+      - name: index_value
+        description: Published CPI index value (base 2014 = 100).
+        data_type: double
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: weight
+        description: CCIF weight of the item in the price area.
+        data_type: double
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: _batch_id
+        description: Batch identifier of the raw partition that produced the row.
+        data_type: varchar
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - period_date
+              - price_area_key
+              - cpi_item_key
+
+  - name: fct_national_accounts
+    description: >
+      National-accounts fact at quarter x account item x price-basis grain,
+      restricted to the 45 industries and eight published GDP aggregates.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: period_year
+        description: Year of the quarter.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: period_quarter
+        description: Quarter number (1-4).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 4
+      - name: quarter_key
+        description: Quarter key linking to dim_quarter.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_quarter')
+                field: quarter_key
+      - name: account_item_key
+        description: National-accounts item of the observation.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_national_account_item')
+                field: account_item_key
+      - name: price_basis
+        description: Price basis of the value (constant 2007 or current USD).
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["constant_2007", "current"]
+      - name: value_thousand_usd
+        description: Value in thousand USD.
+        data_type: bigint
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - quarter_key
+              - account_item_key
+              - price_basis
