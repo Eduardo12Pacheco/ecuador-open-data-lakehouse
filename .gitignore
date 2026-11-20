@@ -11,6 +11,8 @@ venv/
 # Tool caches and reports
 test-results/
 .pytest_cache/
+.hypothesis/
+.import_linter_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
