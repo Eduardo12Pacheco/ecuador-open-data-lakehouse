@@ -109,6 +109,18 @@ The script builds a disposable sample lakehouse, captures eight 1440x900 PNGs
 in `docs/media/` and assembles `demo.gif` from the pages, asserting each frame
 is non-blank and the GIF stays within the size budget.
 
+**README metrics** (requires a sample build; no network):
+
+```bash
+uv run python scripts/gen_metrics.py
+```
+
+The script builds and publishes a disposable sample lakehouse, reads the dbt
+manifest, the quality results and the artifact, then rewrites
+`docs/METRICS.json`. Paste the printed table into both `README.md` and
+`README.es.md` between the `metrics:start`/`metrics:end` markers. Verify with
+`uv run python scripts/gen_metrics.py --check`; never edit a metric by hand.
+
 **Vendored ECharts**:
 
 ```bash
