@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-20
+
+### Fixed
+
+- Report UI: cards in the KPI and two-column grids are top-aligned again (the
+  stacked-card margin no longer leaks into grid children); an e2e test pins it.
+- Report UI: the division-inflation chart no longer collapses its plot area under
+  long Spanish labels, every province is labelled in the province chart, and the
+  ratio chart axis title is no longer clipped.
+- Release workflow: the tag must match the package version, only the wheel, sdist
+  and sample-artifact zip are attached (never stray CI artifacts), and
+  `SHA256SUMS` lists bare file names so `sha256sum -c` works.
+- CI security job: grants the read permission the secret scan needs on pull
+  requests and states honestly that it scans the pushed commits.
+
+### Changed
+
+- The release-wheel install URL in both READMEs is pinned to the tag, so it keeps
+  working after the next release.
+- READMEs show the light and dark theme screenshots; media regenerated.
+- `examples/consume_artifact.py` reports how many months of the latest year are
+  loaded instead of presenting a partial year as complete.
+- Package metadata gains project URLs; `CONTRIBUTING.md` documents the release
+  procedure; version assertions in tests derive from `pyproject.toml`.
+
 ## [0.1.0] - 2026-11-20
 
 ### Added
@@ -38,5 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation set: architecture, data, artifact and contract guides,
   configuration reference, generated lineage, ADRs, README and Spanish mirror.
 
-[Unreleased]: https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/releases/tag/v0.1.0
