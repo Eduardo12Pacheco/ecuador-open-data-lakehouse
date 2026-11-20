@@ -155,6 +155,18 @@
     };
   }
 
+  function categoryLabel(width) {
+    // Long Spanish category names would otherwise squeeze the plot area to a few
+    // pixels; truncate them (the tooltip and the tables carry the full text).
+    return {
+      color: token("text-muted"),
+      fontFamily: token("font-sans"),
+      width: width,
+      overflow: "truncate",
+      interval: 0
+    };
+  }
+
   function baseOption() {
     return {
       color: palette(),
@@ -400,6 +412,10 @@
 
     var yearKey = String(provinceYear.value);
     var provinces = data.provinces[yearKey] || [];
+    var provinceElement = $("chart-tax-provinces");
+    if (provinceElement) {
+      provinceElement.style.height = Math.max(420, provinces.length * 22 + 70) + "px";
+    }
     var provinceOption = baseOption();
     provinceOption.legend = { show: false };
     provinceOption.grid = { left: 24, right: 56, top: 16, bottom: 24, containLabel: true };
@@ -410,7 +426,7 @@
     provinceOption.yAxis = Object.assign({
       type: "category",
       data: provinces.map(function (row) { return row.name; }).reverse()
-    }, axisStyle());
+    }, axisStyle(), { axisLabel: categoryLabel(150) });
     provinceOption.series = [{
       name: yearKey,
       type: "bar",
@@ -486,7 +502,7 @@
     divisionOption.yAxis = Object.assign({
       type: "category",
       data: divisions.map(function (row) { return row.name; })
-    }, axisStyle());
+    }, axisStyle(), { axisLabel: categoryLabel(160) });
     divisionOption.series = [{
       name: "YoY",
       type: "bar",
@@ -540,14 +556,8 @@
     });
     industryOption.yAxis = Object.assign({
       type: "category",
-      data: industries.map(function (row) { return row.name; }),
-      axisLabel: {
-        color: token("text-muted"),
-        width: 220,
-        overflow: "truncate",
-        fontFamily: token("font-sans")
-      }
-    }, axisStyle());
+      data: industries.map(function (row) { return row.name; })
+    }, axisStyle(), { axisLabel: categoryLabel(220) });
     industryOption.series = [{
       name: "GDP contribution",
       type: "bar",
@@ -560,7 +570,7 @@
     var ratioOption = baseOption();
     ratioOption.legend = { show: false };
     ratioOption.tooltip = { trigger: "axis", valueFormatter: function (value) { return pct(value, 2); } };
-    ratioOption.grid = { left: 64, right: 24, top: 24, bottom: 48, containLabel: true };
+    ratioOption.grid = { left: 64, right: 24, top: 40, bottom: 48, containLabel: true };
     ratioOption.xAxis = Object.assign({
       type: "category",
       data: complete.map(function (row) { return String(row.year); })

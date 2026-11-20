@@ -91,6 +91,30 @@ def test_text_is_legible_and_not_clipped(page: Page, report: ReportHome, name: s
     assert clipped == []
 
 
+@pytest.mark.parametrize("name", PAGES)
+def test_cards_in_a_row_share_their_top_edge(page: Page, report: ReportHome, name: str) -> None:
+    """Grid children must line up: stacked-card margins must not leak into grids."""
+    _open(page, report, name)
+    rows = page.evaluate(
+        """() => Array.from(document.querySelectorAll(".kpi-grid, .grid-2")).map((grid) =>
+            Array.from(grid.children).map((child) => {
+                const rect = child.getBoundingClientRect();
+                return { top: rect.top, bottom: rect.bottom, left: rect.left };
+            })
+        )"""
+    )
+    misaligned: list[str] = []
+    for cards in rows:
+        for index, first in enumerate(cards):
+            for second in cards[index + 1 :]:
+                same_row = (
+                    second["top"] < first["bottom"] - 1 and first["top"] < second["bottom"] - 1
+                )
+                if same_row and abs(first["top"] - second["top"]) > 1:
+                    misaligned.append(f"{first['top']:.0f} vs {second['top']:.0f}")
+    assert misaligned == []
+
+
 @pytest.mark.parametrize(("name", "series"), LEGEND_SERIES.items())
 def test_multi_series_charts_show_a_legend(
     page: Page, report: ReportHome, name: str, series: int

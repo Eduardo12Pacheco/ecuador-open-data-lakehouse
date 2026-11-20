@@ -220,6 +220,12 @@ section + section {
   margin-bottom: var(--space-5);
 }
 
+/* Grid children are spaced by the grid gap; the stacked-card margin would
+   otherwise push every card after the first one down and break the row. */
+.kpi-grid > .card {
+  margin-top: 0;
+}
+
 .kpi {
   display: flex;
   flex-direction: column;
@@ -255,6 +261,7 @@ section + section {
   gap: var(--space-5);
 }
 
+.grid-2 > .card,
 .grid-2 > section,
 .grid-2 > article {
   margin-top: 0;

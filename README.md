@@ -84,7 +84,7 @@ snapshot in [`docs/METRICS.json`](docs/METRICS.json) with
 | dbt data tests | 253 |
 | dbt unit tests | 11 |
 | pytest tests (default suite) | 683 |
-| browser e2e tests | 45 |
+| browser e2e tests | 51 |
 | bundled sample payload files | 12 |
 | bundled sample size (bytes) | 4,150,137 |
 | rows in raw | 1,185,307 |

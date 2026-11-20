@@ -2,7 +2,7 @@
   "artifact_tables": 14,
   "artifact_version": "1.0.0",
   "data_tests": 253,
-  "e2e_tests": 45,
+  "e2e_tests": 51,
   "intermediate_rows": 4726,
   "mart_rows": 1184086,
   "models": 22,
