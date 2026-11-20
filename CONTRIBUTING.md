@@ -146,7 +146,10 @@ without updating the pinned checksum and the ADR.
 ## Releasing
 
 1. Bump `version` in `pyproject.toml` and the fallback in
-   `src/ecuador_lakehouse/__init__.py`, then run `uv lock`.
+   `src/ecuador_lakehouse/__init__.py`, then run `uv lock`. Re-run
+   `uv run lakehouse sample build` (with `--cache-dir` pointing at the verified
+   upstream cache to stay offline): `SAMPLE_MANIFEST.json` records the builder
+   version and a test pins it to the package version.
 2. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and
    update the release-wheel URL in both READMEs.
 3. Refresh the metrics snapshot (`uv run python scripts/gen_metrics.py`) and
