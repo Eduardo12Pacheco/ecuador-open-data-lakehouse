@@ -17,6 +17,8 @@ from ecuador_lakehouse.adapters.docs.lineage_mermaid import LineageMermaidRender
 from ecuador_lakehouse.adapters.parsers.bce_cnt import BceCntParser
 from ecuador_lakehouse.adapters.parsers.inec_cpi import InecCpiParser
 from ecuador_lakehouse.adapters.parsers.sri_tax import SriTaxParser
+from ecuador_lakehouse.adapters.report.reader import DuckDbReportReader
+from ecuador_lakehouse.adapters.report.renderer import JinjaReportRenderer
 from ecuador_lakehouse.adapters.sources.ckan_catalog import CkanCatalog
 from ecuador_lakehouse.adapters.sources.http_fetcher import HttpSourceFetcher
 from ecuador_lakehouse.adapters.sources.sample_fetcher import SampleSourceFetcher
@@ -142,6 +144,12 @@ def build_container(
     )
     build_report = BuildReport(
         warehouse=warehouse,
+        reader=DuckDbReportReader(
+            warehouse_path=resolved.home / "warehouse.duckdb",
+            dbt_target_dir=transformer.target_dir,
+        ),
+        renderer=JinjaReportRenderer(),
+        lockfile=lockfile,
         site_dir=resolved.home / "site",
         mode=resolved.mode,
     )

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -74,9 +75,14 @@ class DbtTransformer:
         if select:
             args.extend(["--select", select])
         self._run_command(args, allow_failure=True)
-        run_results = load_json(self._target_dir / "run_results.json")
+        run_results_path = self._target_dir / "run_results.json"
+        run_results = load_json(run_results_path)
         manifest = self._load_manifest()
-        return parse_run_results(run_results, manifest)
+        summary = parse_run_results(run_results, manifest)
+        # ``dbt docs generate`` rewrites run_results.json and drops unit tests,
+        # so keep the quality gate evidence in a stable file for the report UI.
+        shutil.copyfile(run_results_path, self._target_dir / "quality_results.json")
+        return summary
 
     def docs(self) -> Path:
         """Generate offline static dbt docs and return ``static_index.html``."""

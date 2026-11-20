@@ -20,6 +20,7 @@ from ecuador_lakehouse.domain.manifest import (
     SourceRef,
 )
 from ecuador_lakehouse.domain.quality import QualitySummary
+from ecuador_lakehouse.domain.report import ReportSnapshot
 from ecuador_lakehouse.domain.runs import RunRecord
 from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile, SourceId
 
@@ -175,6 +176,24 @@ class LineageRenderer(Protocol):
 
     def render_markdown(self, manifest: Mapping[str, Any]) -> str:
         """Return the complete Markdown document for ``manifest``."""
+        ...
+
+
+@runtime_checkable
+class ReportReader(Protocol):
+    """Read the marts and the dbt run results as one JSON-ready snapshot (S16)."""
+
+    def read(self, *, mode: str) -> ReportSnapshot:
+        """Query the warehouse read-only and return the aggregated report data."""
+        ...
+
+
+@runtime_checkable
+class ReportRenderer(Protocol):
+    """Render a snapshot as the self-contained static multi-page site (S16)."""
+
+    def render(self, snapshot: ReportSnapshot, site_dir: Path) -> Path:
+        """Write every page and asset under ``site_dir`` and return ``index.html``."""
         ...
 
 
