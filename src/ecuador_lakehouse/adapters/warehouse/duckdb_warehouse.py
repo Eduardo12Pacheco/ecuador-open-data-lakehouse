@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import json
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -20,6 +21,7 @@ from ecuador_lakehouse.adapters.warehouse.ddl import RAW_SCHEMA, RAW_TABLES, Raw
 from ecuador_lakehouse.application.ports import LoadResult
 from ecuador_lakehouse.domain.batches import BatchRecord, BatchStatus, make_batch_id
 from ecuador_lakehouse.domain.errors import LakehouseError, SourceSchemaError
+from ecuador_lakehouse.domain.runs import RunRecord, RunStatus, StepResult, StepStatus
 from ecuador_lakehouse.domain.sources import SourceId
 
 _READ_CSV = "read_csv(?, header = true, all_varchar = true, nullstr = ['\\N'])"
@@ -65,8 +67,7 @@ class DuckDbWarehouse:
             connection = duckdb.connect(str(path))
         self._connection: duckdb.DuckDBPyConnection | None = connection
         try:
-            for statement in schema_ddl():
-                connection.execute(statement)
+            self._ensure_schema(connection)
         except BaseException:
             self.close()
             raise
@@ -179,6 +180,43 @@ class DuckDbWarehouse:
         ).fetchall()
         return tuple(self._record_from_row(row) for row in rows)
 
+    def record_run(self, record: RunRecord) -> None:
+        """Insert one completed run into ``meta.runs``."""
+        self.connection.execute(
+            "INSERT INTO meta.runs "
+            "(run_id, started_at, finished_at, status, mode, steps_json) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            [
+                record.run_id,
+                record.started_at,
+                record.finished_at,
+                record.status.value,
+                record.mode,
+                record.steps_json(),
+            ],
+        )
+
+    def runs(self) -> tuple[RunRecord, ...]:
+        """Return every recorded run, oldest first."""
+        rows = self.connection.execute(
+            "SELECT run_id, started_at, finished_at, status, mode, steps_json "
+            "FROM meta.runs ORDER BY started_at, run_id"
+        ).fetchall()
+        return tuple(self._run_from_row(row) for row in rows)
+
+    def open(self) -> None:
+        """Open the database file again after dbt had exclusive access (D18)."""
+        if self._connection is not None:
+            return
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        connection = duckdb.connect(str(self._path))
+        try:
+            self._ensure_schema(connection)
+        except BaseException:
+            connection.close()
+            raise
+        self._connection = connection
+
     def close(self) -> None:
         """Release the file lock (safe to call twice and on Windows)."""
         connection, self._connection = self._connection, None
@@ -186,10 +224,16 @@ class DuckDbWarehouse:
             connection.close()
 
     def __enter__(self) -> DuckDbWarehouse:
+        self.open()
         return self
 
     def __exit__(self, *exc_info: object) -> None:
         self.close()
+
+    @staticmethod
+    def _ensure_schema(connection: duckdb.DuckDBPyConnection) -> None:
+        for statement in schema_ddl():
+            connection.execute(statement)
 
     def _current_batch(self, source_id: SourceId, partition: str) -> BatchRecord | None:
         row = self.connection.execute(
@@ -211,6 +255,29 @@ class DuckDbWarehouse:
             mode=str(row[6]),
             loaded_at=row[7],  # type: ignore[arg-type]
             is_current=bool(row[8]),
+        )
+
+    @staticmethod
+    def _run_from_row(row: tuple[object, ...]) -> RunRecord:
+        raw_steps = json.loads(str(row[5]))
+        steps = tuple(
+            StepResult(
+                name=str(step["name"]),
+                status=StepStatus(str(step["status"])),
+                duration_s=float(step["duration_s"]),
+                detail=str(step.get("detail", "")),
+                metrics={str(key): int(value) for key, value in step.get("metrics", {}).items()},
+                attempts=int(step.get("attempts", 1)),
+            )
+            for step in raw_steps
+        )
+        return RunRecord(
+            run_id=str(row[0]),
+            started_at=row[1],  # type: ignore[arg-type]
+            finished_at=row[2],  # type: ignore[arg-type]
+            status=RunStatus(str(row[3])),
+            mode=str(row[4]),
+            steps=steps,
         )
 
     def _has_batches(self, source_id: SourceId, partition: str) -> bool:

@@ -13,6 +13,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from ecuador_lakehouse.domain.batches import BatchRecord, BatchStatus
 from ecuador_lakehouse.domain.quality import QualitySummary
+from ecuador_lakehouse.domain.runs import RunRecord
 from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile, SourceId
 
 
@@ -114,8 +115,25 @@ class Warehouse(Protocol):
         """Return the append-only batch ledger ordered by load time."""
         ...
 
+    def open(self) -> None:
+        """(Re)open the warehouse after dbt had exclusive access to the file (D18)."""
+        ...
+
     def close(self) -> None:
         """Flush and release the embedded database file."""
+        ...
+
+
+@runtime_checkable
+class RunLedger(Protocol):
+    """Repository for the pipeline run ledger ``meta.runs`` (S13)."""
+
+    def record_run(self, record: RunRecord) -> None:
+        """Persist one completed run and its step results."""
+        ...
+
+    def runs(self) -> tuple[RunRecord, ...]:
+        """Return every recorded run, oldest first."""
         ...
 
 
