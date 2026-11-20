@@ -1,0 +1,185 @@
+version: 2
+
+models:
+  - name: stg_sri__tax_collection
+    description: >
+      Typed, normalized SRI monthly tax collection at the grain year x month x
+      tax group x tax subgroup x tax x taxpayer type x province x canton. The
+      source file is already reduced to province grain by the sample builder, so
+      this model only types, parses and aggregates duplicate rows.
+    columns:
+      - name: period_year
+        description: Collection year.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 2000
+                max_value: 2100
+      - name: period_month
+        description: Collection month number (1-12) parsed from the Spanish label.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: period_date
+        description: First day of the collection month.
+        data_tests:
+          - not_null
+      - name: tax_group_key
+        description: Normalized tax-group key.
+        data_tests:
+          - not_null
+      - name: tax_group_name
+        description: Tax-group display label.
+        data_tests:
+          - not_null
+      - name: tax_subgroup_key
+        description: Normalized tax-subgroup key.
+        data_tests:
+          - not_null
+      - name: tax_subgroup_name
+        description: Tax-subgroup display label.
+        data_tests:
+          - not_null
+      - name: tax_key
+        description: Normalized tax key.
+        data_tests:
+          - not_null
+      - name: tax_name
+        description: Tax display label.
+        data_tests:
+          - not_null
+      - name: taxpayer_type
+        description: Normalized taxpayer type.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["SOCIEDADES", "PERSONAS NATURALES", "NO TIENE"]
+      - name: province_key
+        description: Normalized province key, checked against the reference seed.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('ref_province')
+                field: province_key
+      - name: canton_name
+        description: Canton display name, or NO DESAGREGADO when the row is province grain.
+        data_tests:
+          - not_null
+      - name: canton_key
+        description: Normalized canton key; null when the row has no canton.
+      - name: collected_usd
+        description: Collected amount in USD, summed from the source decimal comma values.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: _batch_id
+        description: Batch identifier of the raw partition this row came from.
+        data_tests:
+          - not_null
+      - name: _source_file
+        description: Source file name of the raw partition this row came from.
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - period_year
+              - period_month
+              - tax_group_key
+              - tax_subgroup_key
+              - tax_key
+              - taxpayer_type
+              - province_key
+              - canton_key
+      - assert_row_count_at_least:
+          arguments:
+            min_rows: 1000
+      - assert_no_month_gaps:
+          arguments:
+            date_column: period_date
+            group_by: period_year
+            where: period_year < 2026
+
+unit_tests:
+- name: normalizes_accents_spaces_and_punctuation
+  description: norm_key maps accented labels and "¿" to the same key as Python.
+  model: stg_sri__tax_collection
+  given:
+    - input: source('raw', 'sri_tax_collection')
+      rows:
+        - anio: "2019"
+          mes_label: "01 Enero"
+          grupo: "CONTRIBUCIONES"
+          subgrupo: "CONTRIBUCIÓN INTERNA"
+          impuesto: "CONTRIBUCIÓN PARA LA PROMOCIÓN ¿ESPECIAL?"
+          tipo_contribuyente: "SOCIEDADES"
+          provincia: "CAÑAR"
+          canton: ""
+          valor_raw: "83,3100"
+          _batch_id: "batch-a"
+          _source_file: "sri_tax_collection_2019.csv.gz"
+          _source_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  expect:
+    rows:
+      - period_year: 2019
+        period_month: 1
+        period_date: "2019-01-01"
+        tax_group_key: "CONTRIBUCIONES"
+        tax_group_name: "CONTRIBUCIONES"
+        tax_subgroup_key: "CONTRIBUCION INTERNA"
+        tax_subgroup_name: "CONTRIBUCIÓN INTERNA"
+        tax_key: "CONTRIBUCION PARA LA PROMOCION ESPECIAL"
+        tax_name: "CONTRIBUCIÓN PARA LA PROMOCIÓN ¿ESPECIAL?"
+        taxpayer_type: "SOCIEDADES"
+        province_key: "CANAR"
+        canton_name: "NO DESAGREGADO"
+        canton_key: null
+        collected_usd: 83.31
+        _batch_id: "batch-a"
+        _source_file: "sri_tax_collection_2019.csv.gz"
+
+- name: parses_the_spanish_month_label
+  description: The fixed Spanish table parses "12 Diciembre" without locale.
+  model: stg_sri__tax_collection
+  given:
+    - input: source('raw', 'sri_tax_collection')
+      rows:
+        - anio: "2019"
+          mes_label: "12 Diciembre"
+          grupo: "IVA"
+          subgrupo: "IVA GENERAL"
+          impuesto: "IVA 15%"
+          tipo_contribuyente: "PERSONAS NATURALES"
+          provincia: "PICHINCHA"
+          canton: "QUITO"
+          valor_raw: "1234,50"
+          _batch_id: "batch-a"
+          _source_file: "sri_tax_collection_2019.csv.gz"
+          _source_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  expect:
+    rows:
+      - period_year: 2019
+        period_month: 12
+        period_date: "2019-12-01"
+        tax_group_key: "IVA"
+        tax_group_name: "IVA"
+        tax_subgroup_key: "IVA GENERAL"
+        tax_subgroup_name: "IVA GENERAL"
+        tax_key: "IVA 15"
+        tax_name: "IVA 15%"
+        taxpayer_type: "PERSONAS NATURALES"
+        province_key: "PICHINCHA"
+        canton_name: "QUITO"
+        canton_key: "QUITO"
+        collected_usd: 1234.50
+        _batch_id: "batch-a"
+        _source_file: "sri_tax_collection_2019.csv.gz"
