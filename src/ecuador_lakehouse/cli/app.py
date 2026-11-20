@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
+
 import typer
+from typer.main import get_current_context  # type: ignore[attr-defined]
 
 from ecuador_lakehouse import __version__
-from ecuador_lakehouse.cli.commands import docs, doctor, fetch, sample
+from ecuador_lakehouse.cli.commands import build, docs, doctor, fetch, sample, test
+from ecuador_lakehouse.cli.guard import AppState
 from ecuador_lakehouse.config import Settings, get_settings
 from ecuador_lakehouse.domain.errors import LakehouseError
 
@@ -19,6 +23,8 @@ fetch.register(app)
 sample.register(app)
 doctor.register(app)
 docs.register(app)
+build.register(app)
+test.register(app)
 
 
 def _load_settings() -> Settings:
@@ -47,9 +53,16 @@ def main_callback(
         is_eager=True,
         help="Print the installed package version and exit.",
     ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Show the full traceback for unexpected errors.",
+    ),
 ) -> None:
     """Ecuador open-data lakehouse command line."""
     _load_settings()
+    with contextlib.suppress(RuntimeError):
+        get_current_context().obj = AppState(debug=debug)
 
 
 def main() -> None:
