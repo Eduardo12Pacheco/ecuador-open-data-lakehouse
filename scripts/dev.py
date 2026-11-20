@@ -3,6 +3,7 @@
 Usage:
     uv run python scripts/dev.py check
     uv run python scripts/dev.py lint
+    uv run python scripts/dev.py arch
     uv run python scripts/dev.py types
     uv run python scripts/dev.py test
     uv run python scripts/dev.py fix
@@ -20,6 +21,7 @@ Command = list[str]
 COMMANDS: dict[str, list[Command]] = {
     "lint": [["ruff", "check", "."]],
     "format": [["ruff", "format", "--check", "."]],
+    "arch": [["lint-imports"]],
     "types": [["mypy"]],
     "test": [["pytest"]],
     "fix": [["ruff", "check", "--fix", "."], ["ruff", "format", "."]],
@@ -27,6 +29,7 @@ COMMANDS: dict[str, list[Command]] = {
 COMMANDS["check"] = [
     *COMMANDS["lint"],
     *COMMANDS["format"],
+    *COMMANDS["arch"],
     *COMMANDS["types"],
     *COMMANDS["test"],
 ]

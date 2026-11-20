@@ -1,0 +1,1 @@
+"""warehouse adapter package."""

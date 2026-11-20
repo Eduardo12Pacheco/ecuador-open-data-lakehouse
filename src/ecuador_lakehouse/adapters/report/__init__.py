@@ -1,0 +1,1 @@
+"""report adapter package."""

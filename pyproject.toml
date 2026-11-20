@@ -117,3 +117,70 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 fail_under = 85
+
+[tool.importlinter]
+root_packages = ["ecuador_lakehouse"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal layers: cli -> container -> adapters -> application -> domain"
+type = "layers"
+layers = [
+    "ecuador_lakehouse.cli",
+    "ecuador_lakehouse.container",
+    "ecuador_lakehouse.adapters",
+    "ecuador_lakehouse.application",
+    "ecuador_lakehouse.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Domain imports only the standard library and itself"
+type = "forbidden"
+source_modules = ["ecuador_lakehouse.domain"]
+forbidden_modules = [
+    "ecuador_lakehouse.adapters",
+    "ecuador_lakehouse.application",
+    "ecuador_lakehouse.cli",
+    "ecuador_lakehouse.config",
+    "ecuador_lakehouse.container",
+    "ecuador_lakehouse.logging_setup",
+    "dbt",
+    "duckdb",
+    "httpx",
+    "jinja2",
+    "pydantic",
+    "pydantic_settings",
+    "platformdirs",
+    "rich",
+    "structlog",
+    "typer",
+]
+
+[[tool.importlinter.contracts]]
+name = "Application does not import adapters or I/O libraries"
+type = "forbidden"
+source_modules = ["ecuador_lakehouse.application"]
+forbidden_modules = [
+    "ecuador_lakehouse.adapters",
+    "ecuador_lakehouse.config",
+    "ecuador_lakehouse.logging_setup",
+    "dbt",
+    "duckdb",
+    "httpx",
+    "jinja2",
+    "rich",
+    "typer",
+]
+
+[[tool.importlinter.contracts]]
+name = "Adapter packages are independent of each other"
+type = "independence"
+modules = [
+    "ecuador_lakehouse.adapters.artifact",
+    "ecuador_lakehouse.adapters.docs",
+    "ecuador_lakehouse.adapters.parsers",
+    "ecuador_lakehouse.adapters.report",
+    "ecuador_lakehouse.adapters.sources",
+    "ecuador_lakehouse.adapters.transform",
+    "ecuador_lakehouse.adapters.warehouse",
+]
