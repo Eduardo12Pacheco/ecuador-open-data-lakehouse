@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+dist-artifact/
+.venv/
+venv/
+
+# Tool caches and reports
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# dbt artefacts (written under $LAKEHOUSE_HOME, never in the repo)
+dbt_packages/
+logs/
+target/
+
+# Generated report site
+site/
+
+# Node tooling (only used by maintainer scripts)
+node_modules/
+
+# Local data and scratch files
+*.duckdb
+*.duckdb.wal
+*.part
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

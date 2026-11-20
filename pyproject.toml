@@ -1,0 +1,119 @@
+[project]
+name = "ecuador-open-data-lakehouse"
+version = "0.1.0"
+description = "Local-first analytics-engineering lakehouse over verified Ecuadorian open data"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Eduardo Pacheco" }]
+keywords = ["analytics-engineering", "dbt", "duckdb", "lakehouse", "open-data", "ecuador"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "dbt-core>=1.12.7,<1.13",
+    "dbt-duckdb>=1.11.1,<1.12",
+    "duckdb>=2.0.0,<3",
+    "typer>=0.29,<1",
+    "rich>=15,<16",
+    "pydantic>=2.14,<3",
+    "pydantic-settings>=2.16,<3",
+    "structlog>=26.1,<27",
+    "httpx>=0.28,<1",
+    "platformdirs>=4.14,<5",
+    "jinja2>=3.1.6,<4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2",
+    "pytest-cov>=7.1",
+    "hypothesis>=6.170",
+    "ruff>=0.17",
+    "mypy>=2.4",
+    "import-linter>=2.17",
+    "pip-audit>=2.10",
+    "playwright>=1.65",
+    "pillow>=11",
+]
+
+[project.scripts]
+lakehouse = "ecuador_lakehouse.cli.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ecuador_lakehouse"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "UP",
+    "B",
+    "SIM",
+    "C4",
+    "PT",
+    "RUF",
+    "S",
+    "N",
+    "PTH",
+    "TID",
+    "PL",
+    "T20",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "S603", "S607"]
+"scripts/**" = ["S603"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ecuador_lakehouse"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["dbt.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -m 'not e2e'"
+markers = ["e2e: end-to-end tests that require a browser and are excluded by default"]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85
