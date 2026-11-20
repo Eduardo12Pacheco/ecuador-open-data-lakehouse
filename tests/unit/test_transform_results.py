@@ -9,7 +9,8 @@ import pytest
 
 from ecuador_lakehouse.adapters.transform.results import load_json, parse_run_results
 from ecuador_lakehouse.domain.errors import TransformError
-from ecuador_lakehouse.domain.quality import TestKind as DbtTestKind, TestStatus as DbtTestStatus
+from ecuador_lakehouse.domain.quality import TestKind as DbtTestKind
+from ecuador_lakehouse.domain.quality import TestStatus as DbtTestStatus
 
 
 def test_parses_statuses_and_uses_manifest_names() -> None:

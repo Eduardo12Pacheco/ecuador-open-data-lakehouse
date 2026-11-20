@@ -373,3 +373,50 @@ def test_select_from_an_empty_sequence_is_typed() -> None:
     runner.run(select=selection)
 
     assert executed(runner) == ["acquire", "load_raw", "transform", "quality", "docs"]
+
+
+def test_default_steps_can_exclude_optional_steps() -> None:
+    dag = Dag(
+        [
+            Step("acquire"),
+            Step("quality", ("acquire",)),
+            Step("publish", ("quality",)),
+        ]
+    )
+    called: list[str] = []
+
+    def executor(name: str):
+        def run(_context: StepContext) -> StepResult:
+            called.append(name)
+            return ok(name)
+
+        return run
+
+    runner = PipelineRunner(
+        dag,
+        {step.name: executor(step.name) for step in dag.steps},
+        FakeLedger(),
+        mode="sample",
+        default_steps=frozenset({"acquire", "quality"}),
+        clock=lambda: datetime(2026, 11, 20, tzinfo=UTC).replace(tzinfo=None),
+        run_id_factory=lambda: "run-test",
+        timer=lambda: 0.0,
+    )
+
+    runner.run()
+    assert called == ["acquire", "quality"]
+
+    selected = runner.run(select=["publish"])
+    assert selected.steps[-1].name == "publish"
+    assert called == ["acquire", "quality", "acquire", "quality", "publish"]
+
+
+def test_default_steps_must_be_registered_steps() -> None:
+    with pytest.raises(ConfigError, match="default steps"):
+        PipelineRunner(
+            DAG,
+            {step.name: (lambda _context: ok("x")) for step in DAG.steps},
+            FakeLedger(),
+            mode="sample",
+            default_steps=frozenset({"acquire", "bogus"}),
+        )

@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ecuador_lakehouse.application.ports import ArtifactStore, VerifyResult
+from ecuador_lakehouse.application.ports import ArtifactVerifier, VerifyResult
 
 
 class VerifyArtifact:
     """Re-check every integrity guarantee of a published artifact."""
 
-    def __init__(self, *, store: ArtifactStore) -> None:
+    def __init__(self, *, store: ArtifactVerifier) -> None:
         self._store = store
 
     def execute(self, artifact_dir: Path) -> VerifyResult:

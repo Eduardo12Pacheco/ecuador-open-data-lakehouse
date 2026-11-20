@@ -11,6 +11,8 @@ from importlib import resources
 from pathlib import Path
 
 from ecuador_lakehouse import __version__
+from ecuador_lakehouse.adapters.artifact.publisher import DuckDbArtifactPublisher
+from ecuador_lakehouse.adapters.artifact.verifier import DuckDbArtifactVerifier
 from ecuador_lakehouse.adapters.docs.lineage_mermaid import LineageMermaidRenderer
 from ecuador_lakehouse.adapters.parsers.bce_cnt import BceCntParser
 from ecuador_lakehouse.adapters.parsers.inec_cpi import InecCpiParser
@@ -36,13 +38,18 @@ from ecuador_lakehouse.application.use_cases.pipeline_steps import (
     AcquireStep,
     DocsStep,
     LoadRawStep,
+    PublishStep,
     QualityStep,
     ReportStep,
     TransformStep,
 )
+from ecuador_lakehouse.application.use_cases.publish import CheckContract, PublishArtifact
+from ecuador_lakehouse.application.use_cases.verify import VerifyArtifact
 from ecuador_lakehouse.config import Settings, get_settings
+from ecuador_lakehouse.domain.contract import ArtifactContract
 from ecuador_lakehouse.domain.dag import Dag, Step
 from ecuador_lakehouse.domain.errors import ConfigError
+from ecuador_lakehouse.domain.manifest import FileRef, SourceRef
 from ecuador_lakehouse.domain.sample import SampleManifest
 from ecuador_lakehouse.domain.sources import Lockfile, SourceId
 
@@ -54,6 +61,7 @@ PIPELINE_DAG = Dag(
         Step("quality", ("transform",)),
         Step("docs", ("quality",)),
         Step("report", ("docs",)),
+        Step("publish", ("quality",)),
     ]
 )
 
@@ -86,6 +94,7 @@ class Container:
     transformer: DbtTransformer
     build_docs: BuildDocs
     build_report: BuildReport
+    publish_artifact: PublishArtifact
     pipeline_acquire: AcquireSources
     pipeline: PipelineRunner
 
@@ -98,8 +107,14 @@ class Container:
         self.transformer.close()
 
 
-def build_container(settings: Settings | None = None) -> Container:
-    """Build the container from explicit settings or the process environment."""
+def build_container(
+    settings: Settings | None = None, *, publish_out: Path | None = None
+) -> Container:
+    """Build the container from explicit settings or the process environment.
+
+    ``publish_out`` enables the ``publish`` step in the default build selection;
+    the step always exists in the DAG so ``--select publish`` keeps working.
+    """
     resolved = settings if settings is not None else get_settings()
     lockfile = load_lockfile()
     download_fetcher = HttpSourceFetcher(
@@ -131,6 +146,18 @@ def build_container(settings: Settings | None = None) -> Container:
         mode=resolved.mode,
     )
     pipeline_acquire = AcquireSources(fetcher=source_fetcher, lockfile=lockfile)
+    artifact_out = publish_out if publish_out is not None else resolved.home / "artifact"
+    publish_artifact = PublishArtifact(
+        store=DuckDbArtifactPublisher(),
+        transformer=transformer,
+        contract=load_artifact_contract(),
+        warehouse_path=resolved.home / "warehouse.duckdb",
+        out_dir=artifact_out,
+        built_from=build_provenance(resolved, lockfile),
+        generator=f"ecuador-open-data-lakehouse/{__version__}",
+        data_mode=resolved.mode,
+        attribution=load_attribution(),
+    )
     steps = {
         "acquire": AcquireStep(
             acquire_sources=pipeline_acquire,
@@ -142,13 +169,20 @@ def build_container(settings: Settings | None = None) -> Container:
         "quality": QualityStep(transformer=transformer, warehouse=warehouse).execute,
         "docs": DocsStep(build_docs=build_docs, warehouse=warehouse).execute,
         "report": ReportStep(build_report=build_report).execute,
+        "publish": PublishStep(publish_artifact=publish_artifact, warehouse=warehouse).execute,
     }
+    default_steps = (
+        None
+        if publish_out is not None
+        else frozenset(step.name for step in PIPELINE_DAG.steps) - {"publish"}
+    )
     pipeline = PipelineRunner(
         PIPELINE_DAG,
         steps,
         warehouse,
         mode=resolved.mode,
         idempotent_steps=frozenset({"acquire"}),
+        default_steps=default_steps,
         retry_policies={"acquire": RetryPolicy(max_attempts=3, delay_s=0.5)},
     )
     return Container(
@@ -163,6 +197,7 @@ def build_container(settings: Settings | None = None) -> Container:
         transformer=transformer,
         build_docs=build_docs,
         build_report=build_report,
+        publish_artifact=publish_artifact,
         pipeline_acquire=pipeline_acquire,
         pipeline=pipeline,
     )
@@ -229,3 +264,70 @@ def verify_sample_integrity(settings: Settings) -> int:
         settings.home / "cache",
     )
     return fetcher.verify_all()
+
+
+def load_artifact_contract(path: Path | None = None) -> ArtifactContract:
+    """Load the committed artifact contract (packaged by default)."""
+    try:
+        text = (
+            path.read_text(encoding="utf-8")
+            if path is not None
+            else resources.files("ecuador_lakehouse")
+            .joinpath("artifact_contract.json")
+            .read_text(encoding="utf-8")
+        )
+    except (FileNotFoundError, OSError) as exc:
+        raise ConfigError("artifact contract is missing or unreadable") from exc
+    return ArtifactContract.from_json_text(text)
+
+
+def load_attribution() -> str:
+    """Load the attribution text that ships with every published artifact."""
+    return (
+        resources.files("ecuador_lakehouse")
+        .joinpath("sample_data", "ATTRIBUTION.md")
+        .read_text(encoding="utf-8")
+    )
+
+
+def build_provenance(settings: Settings, lockfile: Lockfile) -> tuple[SourceRef, ...]:
+    """Record the exact files each source contributed to the published artifact."""
+    sample = load_sample_manifest() if settings.mode == "sample" else None
+    refs: list[SourceRef] = []
+    for source_id in (SourceId.SRI_TAX, SourceId.BCE_CNT, SourceId.INEC_CPI):
+        locked = [entry for entry in lockfile.files if entry.source_id is source_id]
+        if not locked:
+            continue
+        if sample is not None:
+            files = tuple(
+                FileRef(name=entry.name, sha256=entry.sha256)
+                for entry in sample.by_source(source_id)
+            )
+        else:
+            files = tuple(FileRef(name=entry.filename, sha256=entry.sha256) for entry in locked)
+        if not files:
+            continue
+        license_id = lockfile.licenses.get(source_id.value)
+        if not license_id:
+            raise ConfigError(f"lockfile has no license for source {source_id.value!r}")
+        refs.append(
+            SourceRef(
+                source_id=source_id,
+                url=locked[0].url,
+                license_id=license_id,
+                files=files,
+            )
+        )
+    return tuple(refs)
+
+
+def build_artifact_verifier() -> VerifyArtifact:
+    """Compose the verify use case without creating a warehouse file."""
+    return VerifyArtifact(store=DuckDbArtifactVerifier())
+
+
+def build_contract_checker(contract_path: Path | None = None) -> CheckContract:
+    """Compose the contract checker around the committed or supplied contract."""
+    return CheckContract(
+        store=DuckDbArtifactPublisher(), contract=load_artifact_contract(contract_path)
+    )

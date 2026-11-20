@@ -254,6 +254,15 @@ class VerifyResult:
 
 
 @runtime_checkable
+class ArtifactVerifier(Protocol):
+    """Re-check a published artifact without needing a warehouse (S14)."""
+
+    def verify(self, artifact_dir: Path) -> VerifyResult:
+        """Re-check checksums, schemas and row counts of a published artifact."""
+        ...
+
+
+@runtime_checkable
 class ArtifactStore(Protocol):
     """Publish and verify the versioned data product (S14, D19)."""
 

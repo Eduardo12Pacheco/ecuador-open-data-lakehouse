@@ -108,6 +108,7 @@ class PipelineRunner:
         *,
         mode: str,
         idempotent_steps: frozenset[str] = frozenset(),
+        default_steps: frozenset[str] | None = None,
         retry_policies: Mapping[str, RetryPolicy] | None = None,
         clock: Callable[[], datetime] | None = None,
         run_id_factory: Callable[[], str] | None = None,
@@ -142,6 +143,16 @@ class PipelineRunner:
         self._ledger = ledger
         self._mode = mode
         self._idempotent = idempotent_steps
+        if default_steps is None:
+            self._default_steps = frozenset(declared)
+        else:
+            unknown_defaults = default_steps - declared
+            if unknown_defaults:
+                raise ConfigError(
+                    "default steps are not registered pipeline steps: "
+                    f"{', '.join(sorted(unknown_defaults))}"
+                )
+            self._default_steps = frozenset(default_steps)
         self._policies = policies
         self._clock = clock if clock is not None else _utc_now
         self._run_id_factory = (
@@ -261,4 +272,4 @@ class PipelineRunner:
             self._dag.get(from_step)
             order = self._dag.topological_order()
             return order[order.index(from_step) :]
-        return self._dag.topological_order()
+        return [name for name in self._dag.topological_order() if name in self._default_steps]

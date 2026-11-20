@@ -19,8 +19,10 @@ from ecuador_lakehouse.application.use_cases.acquire import AcquireSources
 from ecuador_lakehouse.application.use_cases.build_docs import BuildDocs
 from ecuador_lakehouse.application.use_cases.build_report import BuildReport
 from ecuador_lakehouse.application.use_cases.load_raw import LoadRaw
+from ecuador_lakehouse.application.use_cases.publish import PublishArtifact
 from ecuador_lakehouse.domain.batches import BatchStatus
 from ecuador_lakehouse.domain.errors import QualityGateError
+from ecuador_lakehouse.domain.quality import QualitySummary
 from ecuador_lakehouse.domain.runs import StepResult, StepStatus
 from ecuador_lakehouse.domain.sources import Lockfile, SourceId
 
@@ -154,4 +156,28 @@ class ReportStep:
         context.outputs["report"] = result
         return _result(
             "report", f"{result.batch_count} batches described", batches=result.batch_count
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class PublishStep:
+    """Publish the marts as a versioned, verifiable artifact."""
+
+    publish_artifact: PublishArtifact
+    warehouse: Warehouse
+
+    def execute(self, context: StepContext) -> StepResult:
+        """Reuse the quality summary of this run, or run the gate when selected alone."""
+        summary = context.outputs.get("quality")
+        quality = summary if isinstance(summary, QualitySummary) else None
+        self.warehouse.close()
+        try:
+            result = self.publish_artifact.execute(quality=quality)
+        finally:
+            self.warehouse.open()
+        context.outputs["publish"] = result
+        return _result(
+            "publish",
+            f"{result.table_count} tables at {result.artifact_dir.name}",
+            tables=result.table_count,
         )

@@ -8,7 +8,17 @@ import typer
 from typer.main import get_current_context  # type: ignore[attr-defined]
 
 from ecuador_lakehouse import __version__
-from ecuador_lakehouse.cli.commands import build, docs, doctor, fetch, sample, test
+from ecuador_lakehouse.cli.commands import (
+    build,
+    contract,
+    docs,
+    doctor,
+    fetch,
+    publish,
+    sample,
+    test,
+    verify,
+)
 from ecuador_lakehouse.cli.guard import AppState
 from ecuador_lakehouse.config import Settings, get_settings
 from ecuador_lakehouse.domain.errors import LakehouseError
@@ -25,6 +35,9 @@ doctor.register(app)
 docs.register(app)
 build.register(app)
 test.register(app)
+publish.register(app)
+verify.register(app)
+contract.register(app)
 
 
 def _load_settings() -> Settings:

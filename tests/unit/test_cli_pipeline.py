@@ -72,10 +72,18 @@ class FakeContainer:
         self.closed = True
 
 
-def patch_container(monkeypatch: pytest.MonkeyPatch, container: FakeContainer, module: str) -> None:
-    monkeypatch.setattr(
-        f"ecuador_lakehouse.cli.commands.{module}.build_container", lambda _s: container
-    )
+def patch_container(
+    monkeypatch: pytest.MonkeyPatch,
+    container: FakeContainer,
+    module: str,
+    captured: dict[str, object] | None = None,
+) -> None:
+    def fake(_settings: object, **kwargs: object) -> FakeContainer:
+        if captured is not None:
+            captured.update(kwargs)
+        return container
+
+    monkeypatch.setattr(f"ecuador_lakehouse.cli.commands.{module}.build_container", fake)
 
 
 def test_build_prints_every_step_and_closes_the_container(
@@ -251,3 +259,17 @@ def test_quality_line_without_quality_step_is_a_config_error() -> None:
 
     with pytest.raises(ConfigError, match="did not run"):
         quality_line(report)
+
+
+def test_build_forwards_the_publish_out_dir(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: object
+) -> None:
+    monkeypatch.setenv("LAKEHOUSE_HOME", str(tmp_path))
+    captured: dict[str, object] = {}
+    patch_container(monkeypatch, FakeContainer(FakePipeline()), "build", captured)
+    out = tmp_path / "artifact-out"  # type: ignore[operator]
+
+    result = runner.invoke(app, ["build", "--publish", "--out", str(out)])
+
+    assert result.exit_code == 0
+    assert captured == {"publish_out": out}

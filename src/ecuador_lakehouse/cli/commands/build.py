@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -28,11 +29,25 @@ def build(
         str | None,
         typer.Option("--from-step", help="Run this step and every step after it."),
     ] = None,
+    publish: Annotated[
+        bool,
+        typer.Option(
+            "--publish/--no-publish",
+            help="Also publish the versioned artifact after the quality gate.",
+        ),
+    ] = False,
+    out: Annotated[
+        Path,
+        typer.Option("--out", help="Artifact output directory used with --publish."),
+    ] = Path("dist-artifact"),
 ) -> None:
-    """Acquire, load, transform, test, document and report in one run."""
+    """Acquire, load, transform, test, document, report and optionally publish."""
 
     def command() -> None:
-        container = build_container(get_settings())
+        container = build_container(
+            get_settings(),
+            publish_out=out if publish else None,
+        )
         try:
             report = container.pipeline.run(
                 select=select or None,
