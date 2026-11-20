@@ -143,6 +143,18 @@ without updating the pinned checksum and the ADR.
   Windows and macOS before merging.
 - Update `CHANGELOG.md` under `Unreleased` for user-visible changes.
 
+## Releasing
+
+1. Bump `version` in `pyproject.toml` and the fallback in
+   `src/ecuador_lakehouse/__init__.py`, then run `uv lock`.
+2. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and
+   update the release-wheel URL in both READMEs.
+3. Refresh the metrics snapshot (`uv run python scripts/gen_metrics.py`) and
+   commit.
+4. Push a `vX.Y.Z` tag. `release.yml` fails fast when the tag and the package
+   version differ, re-runs CI, builds the wheel, sdist and sample artifact zip,
+   writes `SHA256SUMS` and creates the GitHub release.
+
 ## Reporting security issues
 
 Do not open a public issue for a vulnerability. Follow [SECURITY.md](SECURITY.md).

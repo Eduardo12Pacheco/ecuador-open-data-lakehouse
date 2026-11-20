@@ -68,7 +68,7 @@ no network, keys or accounts.
 Every tagged release attaches the wheel and sdist:
 
 ```bash
-uv tool install https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/releases/latest/download/ecuador_open_data_lakehouse-0.1.0-py3-none-any.whl
+uv tool install https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/releases/download/v0.1.1/ecuador_open_data_lakehouse-0.1.1-py3-none-any.whl
 ```
 
 ## Results

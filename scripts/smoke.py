@@ -17,7 +17,7 @@ Only the standard library is imported, which keeps the script runnable from a
 bare Python installation.
 
 Usage:
-    uv run python scripts/smoke.py dist/ecuador_open_data_lakehouse-0.1.0-py3-none-any.whl
+    uv run python scripts/smoke.py dist/ecuador_open_data_lakehouse-0.1.1-py3-none-any.whl
 """
 
 from __future__ import annotations

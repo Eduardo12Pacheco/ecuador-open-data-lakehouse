@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 import typer
+from tests.unit.project_info import project_version
 from typer.testing import CliRunner
 
 from ecuador_lakehouse.cli.app import app, main_callback
@@ -48,7 +49,7 @@ def test_valid_environment_still_prints_the_version(monkeypatch: pytest.MonkeyPa
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert result.stdout.strip() == "0.1.0"
+    assert result.stdout.strip() == project_version()
 
 
 def test_main_callback_validates_settings() -> None:

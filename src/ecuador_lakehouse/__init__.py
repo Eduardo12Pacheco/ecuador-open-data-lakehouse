@@ -7,6 +7,6 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("ecuador-open-data-lakehouse")
 except PackageNotFoundError:  # pragma: no cover - only for an uninstalled source tree
-    __version__ = "0.1.0"
+    __version__ = "0.1.1"
 
 __all__ = ["__version__"]

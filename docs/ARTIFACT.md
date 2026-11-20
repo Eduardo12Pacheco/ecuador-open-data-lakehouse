@@ -152,7 +152,7 @@ artifact directory and DuckDB; it does not read the warehouse.
 
 Two versions move independently:
 
-- **Package version** (`0.1.0`) describes the software: CLI, parsers, report
+- **Package version** (`0.1.1`) describes the software: CLI, parsers, report
   and dbt project.
 - **Artifact version** (`1.0.0`) describes the data product and equals the
   contract version.

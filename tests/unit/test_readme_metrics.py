@@ -16,6 +16,8 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
+from tests.unit.project_info import project_version
+
 ROOT = Path(__file__).resolve().parents[2]
 METRICS_PATH = ROOT / "docs" / "METRICS.json"
 SCRIPT = ROOT / "scripts" / "gen_metrics.py"
@@ -92,7 +94,7 @@ def test_metrics_snapshot_has_every_required_key() -> None:
     metrics = _load_metrics()
     assert set(metrics) >= REQUIRED_KEYS, f"missing metrics: {sorted(REQUIRED_KEYS - set(metrics))}"
     assert metrics["schema_version"] == 1
-    assert metrics["package_version"] == "0.1.0"
+    assert metrics["package_version"] == project_version()
     for key in REQUIRED_KEYS - {"schema_version", "package_version", "artifact_version"}:
         assert isinstance(metrics[key], int), f"{key} must be an integer"
         assert metrics[key] > 0, f"{key} must be positive"

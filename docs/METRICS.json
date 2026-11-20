@@ -6,7 +6,7 @@
   "intermediate_rows": 4726,
   "mart_rows": 1184086,
   "models": 22,
-  "package_version": "0.1.0",
+  "package_version": "0.1.1",
   "pytest_tests": 683,
   "raw_rows": 1185307,
   "sample_payload_files": 12,

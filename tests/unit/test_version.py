@@ -7,6 +7,7 @@ import sys
 import warnings
 
 import pytest
+from tests.unit.project_info import project_version
 from typer.testing import CliRunner
 
 from ecuador_lakehouse import __version__
@@ -14,14 +15,14 @@ from ecuador_lakehouse.cli.app import _print_version, app
 
 
 def test_package_exposes_version() -> None:
-    assert __version__ == "0.1.0"
+    assert __version__ == project_version()
 
 
 def test_cli_version_flag_prints_version_and_exits_zero() -> None:
     result = CliRunner().invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert result.stdout.strip() == "0.1.0"
+    assert result.stdout.strip() == project_version()
 
 
 def test_version_callback_is_a_noop_without_the_flag() -> None:
