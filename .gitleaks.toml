@@ -1,0 +1,9 @@
+# Gitleaks configuration: use the built-in secret rules plus a narrow allowlist.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Lockfile hashes and test fixtures are not secrets."
+paths = [
+  '''uv\.lock''',
+]
