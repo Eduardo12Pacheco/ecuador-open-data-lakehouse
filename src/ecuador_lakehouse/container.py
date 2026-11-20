@@ -11,12 +11,14 @@ from importlib import resources
 from pathlib import Path
 
 from ecuador_lakehouse import __version__
+from ecuador_lakehouse.adapters.docs.lineage_mermaid import LineageMermaidRenderer
 from ecuador_lakehouse.adapters.parsers.bce_cnt import BceCntParser
 from ecuador_lakehouse.adapters.parsers.inec_cpi import InecCpiParser
 from ecuador_lakehouse.adapters.parsers.sri_tax import SriTaxParser
 from ecuador_lakehouse.adapters.sources.ckan_catalog import CkanCatalog
 from ecuador_lakehouse.adapters.sources.http_fetcher import HttpSourceFetcher
 from ecuador_lakehouse.adapters.sources.sample_fetcher import SampleSourceFetcher
+from ecuador_lakehouse.adapters.transform.dbt_runner import DbtTransformer
 from ecuador_lakehouse.adapters.warehouse.duckdb_warehouse import DuckDbWarehouse
 from ecuador_lakehouse.application.ports import (
     LicenseCatalog,
@@ -25,6 +27,7 @@ from ecuador_lakehouse.application.ports import (
     Warehouse,
 )
 from ecuador_lakehouse.application.use_cases.acquire import AcquireSources
+from ecuador_lakehouse.application.use_cases.build_docs import BuildDocs
 from ecuador_lakehouse.application.use_cases.build_sample import BuildSample
 from ecuador_lakehouse.application.use_cases.load_raw import LoadRaw
 from ecuador_lakehouse.config import Settings, get_settings
@@ -58,6 +61,8 @@ class Container:
     source_fetcher: SourceFetcher
     warehouse: Warehouse
     load_raw: LoadRaw
+    transformer: DbtTransformer
+    build_docs: BuildDocs
 
     def close(self) -> None:
         """Release network resources, the warehouse lock and any other adapter."""
@@ -65,6 +70,7 @@ class Container:
         self.source_fetcher.close()
         self.license_catalog.close()
         self.warehouse.close()
+        self.transformer.close()
 
 
 def build_container(settings: Settings | None = None) -> Container:
@@ -82,6 +88,11 @@ def build_container(settings: Settings | None = None) -> Container:
         resolved.home / "warehouse.duckdb",
         mode=resolved.mode,
     )
+    transformer = DbtTransformer(
+        warehouse_path=resolved.home / "warehouse.duckdb",
+        home=resolved.home,
+        threads=resolved.dbt_threads,
+    )
     parsers = default_parsers()
     return Container(
         settings=resolved,
@@ -92,6 +103,12 @@ def build_container(settings: Settings | None = None) -> Container:
         source_fetcher=source_fetcher,
         warehouse=warehouse,
         load_raw=LoadRaw(parsers=parsers, warehouse=warehouse),
+        transformer=transformer,
+        build_docs=BuildDocs(
+            transformer=transformer,
+            renderer=LineageMermaidRenderer(),
+            site_dir=resolved.home / "site",
+        ),
     )
 
 

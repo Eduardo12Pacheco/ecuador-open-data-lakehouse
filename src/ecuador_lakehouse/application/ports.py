@@ -131,10 +131,23 @@ class Transformer(Protocol):
         """Run selected dbt data and unit tests and return their summary."""
         ...
 
+    def docs(self) -> Path:
+        """Generate static dbt documentation and return the entry-point file."""
+        ...
+
     def manifest(self) -> Mapping[str, Any]:
         """Return the dbt manifest produced by the last run."""
         ...
 
     def close(self) -> None:
         """Release any resources held by the transformer."""
+        ...
+
+
+@runtime_checkable
+class LineageRenderer(Protocol):
+    """Render a dbt manifest as human-readable lineage documentation (S12)."""
+
+    def render_markdown(self, manifest: Mapping[str, Any]) -> str:
+        """Return the complete Markdown document for ``manifest``."""
         ...
