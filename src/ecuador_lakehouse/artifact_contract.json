@@ -1,0 +1,497 @@
+{
+  "schema_version": 1,
+  "contract_version": "1.0.0",
+  "artifact_name": "ecuador-lakehouse",
+  "tables": [
+    {
+      "name": "dim_cpi_item",
+      "kind": "dim",
+      "grain": "CCIF item",
+      "columns": [
+        {
+          "name": "cpi_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ccif_code",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "level",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ccif_parent_code",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ccif_name",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "dim_date",
+      "kind": "dim",
+      "grain": "month",
+      "columns": [
+        {
+          "name": "month_key",
+          "type": "INTEGER"
+        },
+        {
+          "name": "month_start_date",
+          "type": "DATE"
+        },
+        {
+          "name": "year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "quarter",
+          "type": "INTEGER"
+        },
+        {
+          "name": "month",
+          "type": "INTEGER"
+        },
+        {
+          "name": "month_name_es",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "quarter_key",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "dim_geography",
+      "kind": "dim",
+      "grain": "province x canton",
+      "columns": [
+        {
+          "name": "geography_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "province_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "province_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "canton_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "canton_name",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "dim_national_account_item",
+      "kind": "dim",
+      "grain": "national account item",
+      "columns": [
+        {
+          "name": "account_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "account_code",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "item_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "kind",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "dim_price_area",
+      "kind": "dim",
+      "grain": "price area",
+      "columns": [
+        {
+          "name": "price_area_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "price_area_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "area_kind",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "dim_quarter",
+      "kind": "dim",
+      "grain": "quarter",
+      "columns": [
+        {
+          "name": "quarter_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "quarter",
+          "type": "INTEGER"
+        },
+        {
+          "name": "quarter_start_date",
+          "type": "DATE"
+        },
+        {
+          "name": "quarter_end_date",
+          "type": "DATE"
+        }
+      ]
+    },
+    {
+      "name": "dim_tax_item",
+      "kind": "dim",
+      "grain": "tax item natural key x SCD2 version",
+      "columns": [
+        {
+          "name": "tax_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_item_nk",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_group_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_subgroup_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "lifecycle_status",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "valid_from",
+          "type": "DATE"
+        },
+        {
+          "name": "valid_to",
+          "type": "DATE"
+        },
+        {
+          "name": "is_current",
+          "type": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "name": "fct_cpi_index",
+      "kind": "fct",
+      "grain": "month x price area x CPI item",
+      "columns": [
+        {
+          "name": "period_date",
+          "type": "DATE"
+        },
+        {
+          "name": "period_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "period_month",
+          "type": "INTEGER"
+        },
+        {
+          "name": "price_area_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "cpi_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "index_value",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "weight",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "_batch_id",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "fct_national_accounts",
+      "kind": "fct",
+      "grain": "quarter x account item x price basis",
+      "columns": [
+        {
+          "name": "period_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "period_quarter",
+          "type": "INTEGER"
+        },
+        {
+          "name": "quarter_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "account_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "price_basis",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "value_thousand_usd",
+          "type": "BIGINT"
+        }
+      ]
+    },
+    {
+      "name": "fct_tax_collection",
+      "kind": "fct",
+      "grain": "month x tax item x taxpayer type x geography",
+      "columns": [
+        {
+          "name": "period_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "period_month",
+          "type": "INTEGER"
+        },
+        {
+          "name": "period_date",
+          "type": "DATE"
+        },
+        {
+          "name": "tax_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_item_nk",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "taxpayer_type",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "geography_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "collected_usd",
+          "type": "DECIMAL(18,2)"
+        },
+        {
+          "name": "_batch_id",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "mart_inflation_monthly",
+      "kind": "mart",
+      "grain": "month x price area x CPI item (general and division levels)",
+      "columns": [
+        {
+          "name": "period_date",
+          "type": "DATE"
+        },
+        {
+          "name": "period_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "period_month",
+          "type": "INTEGER"
+        },
+        {
+          "name": "price_area_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "price_area_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "cpi_item_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ccif_code",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ccif_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "level",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "index_value",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mom",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "yoy",
+          "type": "DOUBLE"
+        }
+      ]
+    },
+    {
+      "name": "mart_tax_collection_monthly",
+      "kind": "mart",
+      "grain": "month x tax group",
+      "columns": [
+        {
+          "name": "period_date",
+          "type": "DATE"
+        },
+        {
+          "name": "period_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "period_month",
+          "type": "INTEGER"
+        },
+        {
+          "name": "tax_group_key",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_group_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "nominal_usd",
+          "type": "DECIMAL(18,2)"
+        },
+        {
+          "name": "real_usd_2014",
+          "type": "DECIMAL(18,2)"
+        },
+        {
+          "name": "yoy_nominal",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "share_of_month",
+          "type": "DOUBLE"
+        }
+      ]
+    },
+    {
+      "name": "mart_tax_lifecycle",
+      "kind": "mart",
+      "grain": "tax item natural key",
+      "columns": [
+        {
+          "name": "tax_item_nk",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "tax_group_name",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "first_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "last_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "years_active",
+          "type": "INTEGER"
+        },
+        {
+          "name": "versions_count",
+          "type": "INTEGER"
+        },
+        {
+          "name": "total_collected_usd",
+          "type": "DECIMAL(18,2)"
+        },
+        {
+          "name": "current_status",
+          "type": "VARCHAR"
+        }
+      ]
+    },
+    {
+      "name": "mart_tax_to_gdp_annual",
+      "kind": "mart",
+      "grain": "year",
+      "columns": [
+        {
+          "name": "period_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sri_collection_usd",
+          "type": "DECIMAL(18,2)"
+        },
+        {
+          "name": "gdp_current_usd",
+          "type": "DECIMAL(20,2)"
+        },
+        {
+          "name": "ratio",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "quarters_available",
+          "type": "INTEGER"
+        },
+        {
+          "name": "months_available",
+          "type": "INTEGER"
+        },
+        {
+          "name": "is_complete",
+          "type": "BOOLEAN"
+        }
+      ]
+    }
+  ]
+}
