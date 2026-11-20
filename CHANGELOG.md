@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ratio chart axis title is no longer clipped.
 - Release workflow: the tag must match the package version, only the wheel, sdist
   and sample-artifact zip are attached (never stray CI artifacts), and
-  `SHA256SUMS` lists bare file names so `sha256sum -c` works.
+  `SHA256SUMS` lists bare file names so `sha256sum -c` works; re-running the
+  release job on an existing release uploads the assets instead of failing.
 - CI security job: grants the read permission the secret scan needs on pull
   requests and states honestly that it scans the pushed commits.
 
