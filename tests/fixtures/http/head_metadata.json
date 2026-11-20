@@ -1,0 +1,38 @@
+{
+  "captured_at": "2026-11-20",
+  "user_agent": "ecuador-open-data-lakehouse/0.1.0",
+  "files": [
+    {
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2024.csv",
+      "status": 200,
+      "content_length": 96066889,
+      "last_modified": "Fri, 24 Jan 2025 16:31:53 GMT",
+      "accept_ranges": "bytes",
+      "content_type": "text/csv"
+    },
+    {
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2026.csv",
+      "status": 200,
+      "content_length": 83320465,
+      "last_modified": "Tue, 17 Nov 2026 15:18:23 GMT",
+      "accept_ranges": "bytes",
+      "content_type": "text/csv"
+    },
+    {
+      "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Inflacion/2024/Diciembre/Tabulados_y_series_historicas_CSV.zip",
+      "status": 200,
+      "content_length": 7479409,
+      "last_modified": "Tue, 07 Jan 2025 21:38:42 GMT",
+      "accept_ranges": "bytes",
+      "content_type": "application/zip"
+    },
+    {
+      "url": "https://www.datosabiertos.gob.ec/dataset/7d5ad4b3-a8f7-42d9-8103-81336a592ea6/resource/2fe2427a-daeb-4137-a29f-22834f3d5ee0/download/cuentastrimestralesdesagregadas.csv",
+      "status": 200,
+      "content_length": 6108986,
+      "last_modified": "Tue, 24 Aug 2021 22:05:58 GMT",
+      "accept_ranges": "bytes",
+      "content_type": "text/csv"
+    }
+  ]
+}

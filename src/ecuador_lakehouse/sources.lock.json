@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-11-19",
+  "licenses": {
+    "bce_cnt": "cc-by",
+    "inec_cpi": "cc-by-4.0",
+    "sri_tax": "cc-by"
+  },
+  "files": [
+    {
+      "source_id": "sri_tax",
+      "partition": "2017",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2017.csv",
+      "filename": "sri_recaudacion_2017.csv",
+      "size_bytes": 84892997,
+      "sha256": "dd14c281d082417342daa2e3060ba1df759f2c29a2f7144e4ce91e62a79753d4",
+      "mutable": false,
+      "encoding_hint": "utf-8-sig"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2018",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2018.csv",
+      "filename": "sri_recaudacion_2018.csv",
+      "size_bytes": 90751274,
+      "sha256": "5159954189b7e771b45e8a8f39dced83c1ea555a2044e277ad92dc9a8a4c40a2",
+      "mutable": false,
+      "encoding_hint": "utf-8-sig"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2019",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2019.csv",
+      "filename": "sri_recaudacion_2019.csv",
+      "size_bytes": 95526741,
+      "sha256": "2d109fe8c4419086c17ae11c74095a87d7bb30a3bfe90f6aa1445700ffd475df",
+      "mutable": false,
+      "encoding_hint": "utf-8-sig"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2020",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2020.csv",
+      "filename": "sri_recaudacion_2020.csv",
+      "size_bytes": 84746785,
+      "sha256": "20e51bafc4cb4d49edacc6ee346bff7a5fcc2237bbc8f041163dc3bab65b1903",
+      "mutable": false,
+      "encoding_hint": "utf-8-sig"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2021",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2021.csv",
+      "filename": "sri_recaudacion_2021.csv",
+      "size_bytes": 101639183,
+      "sha256": "bf088d16738ab9e4bca10803155680e80564107f320034e8c8b37ebd200845fe",
+      "mutable": false,
+      "encoding_hint": "utf-8-sig"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2022",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2022.csv",
+      "filename": "sri_recaudacion_2022.csv",
+      "size_bytes": 108707735,
+      "sha256": "7a7f106f64cf0070377b4898c06907bdc50c293763050630bc742601d30b1b69",
+      "mutable": false,
+      "encoding_hint": "utf-8-sig"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2023",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2023.csv",
+      "filename": "sri_recaudacion_2023.csv",
+      "size_bytes": 100356033,
+      "sha256": "e6e80b5cdbae088e7ab4f4e4be3b30b75faf1df81edeb4cca2c3f52001f10c51",
+      "mutable": false,
+      "encoding_hint": "cp1252"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2024",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2024.csv",
+      "filename": "sri_recaudacion_2024.csv",
+      "size_bytes": 96066889,
+      "sha256": "f5ffc07af3666084f2de1904ae198f3b48d9fe219176ca7039109e4d3040e173",
+      "mutable": false,
+      "encoding_hint": "cp1252"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2025",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2025.csv",
+      "filename": "sri_recaudacion_2025.csv",
+      "size_bytes": 100563014,
+      "sha256": "d6ec28197b6b85f2ce05cf12c076d34556e7c99cff49e4ad6d0995639fed1c4d",
+      "mutable": false,
+      "encoding_hint": "cp1252"
+    },
+    {
+      "source_id": "sri_tax",
+      "partition": "2026",
+      "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2026.csv",
+      "filename": "sri_recaudacion_2026.csv",
+      "size_bytes": 83320465,
+      "sha256": "90878717f7faadaf5f3e815ca35c6164b059ae97b7ef8b8722e7b843918b420f",
+      "mutable": true,
+      "encoding_hint": "cp1252"
+    },
+    {
+      "source_id": "inec_cpi",
+      "partition": "2024-12",
+      "url": "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Inflacion/2024/Diciembre/Tabulados_y_series_historicas_CSV.zip",
+      "filename": "Tabulados_y_series_historicas_CSV.zip",
+      "size_bytes": 7479409,
+      "sha256": "e7b854b4f422d23f622e3c474ebc47a0bc46caa9d15f0a3670bce7f67fc697f4",
+      "mutable": false,
+      "encoding_hint": null
+    },
+    {
+      "source_id": "bce_cnt",
+      "partition": "2000Q1-2021Q1",
+      "url": "https://www.datosabiertos.gob.ec/dataset/7d5ad4b3-a8f7-42d9-8103-81336a592ea6/resource/2fe2427a-daeb-4137-a29f-22834f3d5ee0/download/cuentastrimestralesdesagregadas.csv",
+      "filename": "cuentastrimestralesdesagregadas.csv",
+      "size_bytes": 6108986,
+      "sha256": "b90e0e5a403a44ecd862969b72c6fc900f730e62d7b4cffecaa55116ed81e187",
+      "mutable": false,
+      "encoding_hint": "cp1252"
+    }
+  ]
+}
