@@ -6,11 +6,13 @@ DuckDB, no dbt and no adapter import is allowed here (S17).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from ecuador_lakehouse.domain.batches import BatchRecord, BatchStatus
+from ecuador_lakehouse.domain.quality import QualitySummary
 from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile, SourceId
 
 
@@ -114,4 +116,25 @@ class Warehouse(Protocol):
 
     def close(self) -> None:
         """Flush and release the embedded database file."""
+        ...
+
+
+@runtime_checkable
+class Transformer(Protocol):
+    """Run the dbt seed and transformation layers through one adapter (D4, D18)."""
+
+    def seed_and_run(self, *, select: str | None = None) -> None:
+        """Seed reference data and run every selected dbt model."""
+        ...
+
+    def test(self, *, select: str | None = None) -> QualitySummary:
+        """Run selected dbt data and unit tests and return their summary."""
+        ...
+
+    def manifest(self) -> Mapping[str, Any]:
+        """Return the dbt manifest produced by the last run."""
+        ...
+
+    def close(self) -> None:
+        """Release any resources held by the transformer."""
         ...
