@@ -77,3 +77,16 @@ def test_unknown_layers_are_grouped_last_and_markdown_has_a_header() -> None:
     assert document.startswith("# dbt lineage")
     assert document.endswith("```\n")
     assert LineageMermaidRenderer().render_markdown(manifest(nodes)) == document
+
+
+def test_windows_path_separators_group_into_the_same_layers() -> None:
+    nodes = [
+        model("model.p.stg", "stg", "models\\staging\\stg.sql", []),
+        model("model.p.mart", "mart", "models\\marts\\mart.sql", ["model.p.stg"]),
+    ]
+
+    mermaid = render_mermaid(manifest(nodes))
+
+    assert "subgraph staging" in mermaid
+    assert "subgraph marts" in mermaid
+    assert "subgraph other" not in mermaid

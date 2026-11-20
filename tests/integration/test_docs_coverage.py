@@ -35,7 +35,7 @@ def test_every_mart_enforces_its_contract(marts_build: StagingBuild) -> None:
     marts = [
         model
         for model in _models(manifest)
-        if model.get("original_file_path", "").startswith("models/marts/")
+        if str(model.get("original_file_path", "")).replace("\\", "/").startswith("models/marts/")
     ]
 
     assert len(marts) == 14

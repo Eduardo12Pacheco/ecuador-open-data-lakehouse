@@ -16,7 +16,9 @@ _MIN_MODEL_PATH_PARTS = 3
 
 
 def _layer(node: Mapping[str, Any]) -> str:
-    parts = str(node.get("original_file_path", "")).split("/")
+    # dbt writes OS-native separators in ``original_file_path``; normalize them
+    # so the rendered layer groups are identical on Linux, macOS and Windows.
+    parts = str(node.get("original_file_path", "")).replace("\\", "/").split("/")
     if len(parts) >= _MIN_MODEL_PATH_PARTS and parts[0] == "models":
         return parts[1]
     return _UNKNOWN_LAYER
