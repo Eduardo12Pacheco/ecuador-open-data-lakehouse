@@ -1,0 +1,180 @@
+version: 2
+
+models:
+  - name: stg_bce__national_accounts
+    description: >
+      Typed BCE quarterly national accounts: one row per variable, quarter and
+      price basis with the value in thousand USD. Empty source values stay null.
+    columns:
+      - name: variable_type
+        description: Spanish price-basis label published by BCE.
+        data_tests:
+          - not_null
+      - name: variable
+        description: National-accounts variable description.
+        data_tests:
+          - not_null
+      - name: account_code
+        description: Industry or aggregate code (I001-I045, IVAB*, PGCF*, PEBS2, PIBS2, P*).
+        data_tests:
+          - not_null
+      - name: account_name
+        description: Industry or aggregate display name.
+        data_tests:
+          - not_null
+      - name: unit
+        description: Unit description as published by BCE.
+        data_tests:
+          - not_null
+      - name: period_year
+        description: Year of the quarter.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 2000
+                max_value: 2100
+      - name: period_quarter
+        description: Quarter number (1-4).
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 4
+      - name: price_basis
+        description: Price basis derived from the source label.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["constant_2007", "current"]
+      - name: value_thousand_usd
+        description: Value in thousand USD with comma thousands removed; null when missing.
+      - name: _batch_id
+        description: Batch identifier of the raw partition this row came from.
+        data_tests:
+          - not_null
+      - name: _source_file
+        description: Source file name of the raw partition this row came from.
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - account_code
+              - variable
+              - period_year
+              - period_quarter
+              - price_basis
+      - assert_row_count_at_least:
+          arguments:
+            min_rows: 30000
+
+unit_tests:
+- name: parses_comma_thousands_and_keeps_empty_values_null
+  description: "-40,290 and 6,084,829 become integers; an empty value stays null."
+  model: stg_bce__national_accounts
+  given:
+    - input: source('raw', 'bce_cnt_quarterly')
+      rows:
+        - tipo_variable: "Cuentas Nacionales Trimestrales - Valores Constantes"
+          variable: "Valor Agregado Bruto por Industrias/PIB"
+          codigo: "I001"
+          descripcion: "Cultivo de banano, café y cacao"
+          unidades: "Miles de US dólares , 2007 =100"
+          anio: "2000"
+          trimestre: "1"
+          valor_raw: "6,084,829"
+          _batch_id: "batch-b"
+          _source_file: "bce_cnt_quarterly.csv.gz"
+          _source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        - tipo_variable: "Cuentas Nacionales Trimestrales - Valores Constantes"
+          variable: "Valor Agregado Bruto por Industrias/PIB"
+          codigo: "I002"
+          descripcion: "Cultivo de flores"
+          unidades: "Miles de US dólares , 2007 =100"
+          anio: "2000"
+          trimestre: "1"
+          valor_raw: ""
+          _batch_id: "batch-b"
+          _source_file: "bce_cnt_quarterly.csv.gz"
+          _source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  expect:
+    rows:
+      - variable_type: "Cuentas Nacionales Trimestrales - Valores Constantes"
+        variable: "Valor Agregado Bruto por Industrias/PIB"
+        account_code: "I001"
+        account_name: "Cultivo de banano, café y cacao"
+        unit: "Miles de US dólares , 2007 =100"
+        period_year: 2000
+        period_quarter: 1
+        price_basis: "constant_2007"
+        value_thousand_usd: 6084829
+        _batch_id: "batch-b"
+        _source_file: "bce_cnt_quarterly.csv.gz"
+      - variable_type: "Cuentas Nacionales Trimestrales - Valores Constantes"
+        variable: "Valor Agregado Bruto por Industrias/PIB"
+        account_code: "I002"
+        account_name: "Cultivo de flores"
+        unit: "Miles de US dólares , 2007 =100"
+        period_year: 2000
+        period_quarter: 1
+        price_basis: "constant_2007"
+        value_thousand_usd: null
+        _batch_id: "batch-b"
+        _source_file: "bce_cnt_quarterly.csv.gz"
+
+- name: maps_both_price_bases
+  description: Constant and current labels map to the documented price_basis values.
+  model: stg_bce__national_accounts
+  given:
+    - input: source('raw', 'bce_cnt_quarterly')
+      rows:
+        - tipo_variable: "Cuentas Nacionales Trimestrales - Valores Constantes"
+          variable: "PIB"
+          codigo: "IVAB3"
+          descripcion: "TOTAL PIB"
+          unidades: "Miles de US dólares , 2007 =100"
+          anio: "2020"
+          trimestre: "2"
+          valor_raw: "-40,290"
+          _batch_id: "batch-b"
+          _source_file: "bce_cnt_quarterly.csv.gz"
+          _source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        - tipo_variable: "Cuentas Nacionales Trimestrales - Valores Corrientes"
+          variable: "PIB"
+          codigo: "IVAB3"
+          descripcion: "TOTAL PIB"
+          unidades: "Miles de US dólares"
+          anio: "2020"
+          trimestre: "2"
+          valor_raw: "6,084,829"
+          _batch_id: "batch-b"
+          _source_file: "bce_cnt_quarterly.csv.gz"
+          _source_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  expect:
+    rows:
+      - variable_type: "Cuentas Nacionales Trimestrales - Valores Constantes"
+        variable: "PIB"
+        account_code: "IVAB3"
+        account_name: "TOTAL PIB"
+        unit: "Miles de US dólares , 2007 =100"
+        period_year: 2020
+        period_quarter: 2
+        price_basis: "constant_2007"
+        value_thousand_usd: -40290
+        _batch_id: "batch-b"
+        _source_file: "bce_cnt_quarterly.csv.gz"
+      - variable_type: "Cuentas Nacionales Trimestrales - Valores Corrientes"
+        variable: "PIB"
+        account_code: "IVAB3"
+        account_name: "TOTAL PIB"
+        unit: "Miles de US dólares"
+        period_year: 2020
+        period_quarter: 2
+        price_basis: "current"
+        value_thousand_usd: 6084829
+        _batch_id: "batch-b"
+        _source_file: "bce_cnt_quarterly.csv.gz"
