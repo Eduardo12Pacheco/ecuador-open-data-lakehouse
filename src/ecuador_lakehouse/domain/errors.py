@@ -34,6 +34,12 @@ class SourceSchemaError(LakehouseError):
     exit_code: ClassVar[int] = 4
 
 
+class UnsafeArchiveError(SourceSchemaError):
+    """A ZIP archive is malformed or would escape the extraction directory."""
+
+    exit_code: ClassVar[int] = 4
+
+
 class SourceUnavailableError(LakehouseError):
     """An upstream source cannot be reached or read."""
 
