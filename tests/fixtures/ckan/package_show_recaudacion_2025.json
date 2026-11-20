@@ -1,0 +1,26 @@
+{
+  "help": "https://www.datosabiertos.gob.ec/api/3/action/help_show?name=package_show",
+  "success": true,
+  "result": {
+    "id": "7e84efc4-422f-4800-89e7-bcfa243e0748",
+    "name": "recaudacion-de-impuestos-2025",
+    "title": "Recaudación de Impuestos - 2025",
+    "license_id": "cc-by",
+    "license_title": "Creative Commons Attribution",
+    "license_url": "http://www.opendefinition.org/licenses/cc-by",
+    "metadata_modified": "2025-03-17T22:17:31.215557",
+    "url": "",
+    "organization": {
+      "name": "sri-servicio-de-rentas-internas",
+      "title": "SRI-Servicio de Rentas Internas"
+    },
+    "resources": [
+      {
+        "name": "sri_recaudacion_2025",
+        "url": "https://descargas.sri.gob.ec/download/datosAbiertos/sri_recaudacion_2025.csv",
+        "format": "CSV",
+        "mimetype": "text/csv"
+      }
+    ]
+  }
+}
