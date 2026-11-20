@@ -1,0 +1,18 @@
+version: 2
+
+exposures:
+  - name: lakehouse_report
+    label: Lakehouse static report
+    type: dashboard
+    maturity: high
+    description: >
+      Offline static report served by ``lakehouse serve``. It reads the four
+      analytic marts to show tax collection, inflation, macro ratios and the
+      tax-line lifecycle, together with the dbt quality summary and lineage.
+    depends_on:
+      - ref('mart_tax_collection_monthly')
+      - ref('mart_inflation_monthly')
+      - ref('mart_tax_to_gdp_annual')
+      - ref('mart_tax_lifecycle')
+    owner:
+      name: Eduardo Pacheco
