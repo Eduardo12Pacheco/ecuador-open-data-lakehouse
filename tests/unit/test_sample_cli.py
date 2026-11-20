@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
 from typer.testing import CliRunner
 
 from ecuador_lakehouse.cli.app import app
 from ecuador_lakehouse.domain.errors import ChecksumMismatchError
+from ecuador_lakehouse.domain.sample import ControlTotal, SampleBuildReport, SampleFile
+from ecuador_lakehouse.domain.sources import SourceId
 
 runner = CliRunner()
 
@@ -48,3 +52,47 @@ def test_doctor_reports_a_checksum_failure_with_exit_three(
     assert result.exit_code == 3
     assert "checksum mismatch" in result.output
     assert "Traceback" not in result.output
+
+
+def test_sample_build_prints_the_report(monkeypatch: pytest.MonkeyPatch) -> None:
+    entry = SampleFile(
+        name="sri_tax_collection_2019.csv.gz",
+        source_id=SourceId.SRI_TAX,
+        partition="2019",
+        size_bytes=223_491,
+        sha256="a" * 64,
+        rows=24_035,
+        derived_from_sha256="b" * 64,
+    )
+    total = ControlTotal(SourceId.SRI_TAX, 2019, Decimal("14268758446.78"), True, "2026-11-19")
+    report = SampleBuildReport(
+        files=(entry,),
+        control_totals=(total,),
+        cached=("sri_tax_collection_2019.csv.gz",),
+    )
+    calls: list[tuple[int, ...]] = []
+
+    class FakeFetcher:
+        def close(self) -> None:
+            pass
+
+    class FakeBuilder:
+        fetcher = FakeFetcher()
+
+        def execute(self, years: object) -> SampleBuildReport:
+            calls.append(tuple(years))  # type: ignore[arg-type]
+            return report
+
+    monkeypatch.setattr(
+        "ecuador_lakehouse.cli.commands.sample.build_sample_builder",
+        lambda *_args, **_kwargs: FakeBuilder(),
+    )
+
+    result = runner.invoke(app, ["sample", "build", "--years", "2019"])
+
+    assert result.exit_code == 0
+    assert calls == [(2019,)]
+    assert "sha256 OK aaaaaaaa sri_tax_collection_2019.csv.gz" in result.output
+    assert "(223491 bytes, cached, 24035 rows)" in result.output
+    assert "Wrote 1 sample files (223491 bytes)." in result.output
+    assert "Control totals: 1 SRI rows." in result.output
