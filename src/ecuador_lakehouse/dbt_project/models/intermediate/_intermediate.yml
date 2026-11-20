@@ -59,6 +59,123 @@ models:
         data_tests:
           - not_null
 
+  - name: int_tax_collection_monthly
+    description: >
+      Monthly tax collection aggregated to month x tax group, the shared input
+      of the monthly analytic mart. Grouping by the SCD2 group label keeps the
+      grain aligned with the dimensional model.
+    columns:
+      - name: period_date
+        description: First day of the collection month.
+        data_tests:
+          - not_null
+      - name: period_year
+        description: Collection year.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 2000
+                max_value: 2100
+      - name: period_month
+        description: Collection month number (1-12).
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: tax_group_name
+        description: Tax-group label of the collected taxes.
+        data_tests:
+          - not_null
+      - name: nominal_usd
+        description: Collected amount in nominal USD.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - period_date
+              - tax_group_name
+
+  - name: int_cpi_national_monthly
+    description: >
+      National general CPI index per month (base 2014 = 100), used to deflate
+      nominal tax collection. It stops at the published December-2024 vintage,
+      so later months have no deflator by design.
+    columns:
+      - name: period_date
+        description: First day of the CPI month.
+        data_tests:
+          - not_null
+          - unique
+      - name: period_year
+        description: CPI year.
+        data_tests:
+          - not_null
+      - name: period_month
+        description: CPI month number (1-12).
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: index_value
+        description: National general CPI index value.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: weight
+        description: National general CPI weight, expected to be 1.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: int_gdp_annual
+    description: >
+      Annual nominal GDP from the BCE national accounts: four quarters of the
+      current-USD TOTAL PIB series times 1000. Partial years (2021 in the
+      frozen vintage) report the quarters actually published.
+    columns:
+      - name: period_year
+        description: Calendar year of the GDP estimate.
+        data_tests:
+          - not_null
+          - unique
+      - name: gdp_thousand_usd
+        description: Annual GDP in thousand USD, summed from the quarterly values.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: gdp_current_usd
+        description: Annual nominal GDP in USD.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: quarters_available
+        description: Number of published quarters contributing to the annual value.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 4
+
 unit_tests:
   - name: continuous_presence_is_one_active_version
     description: A tax line present in every loaded year has a single open version.
