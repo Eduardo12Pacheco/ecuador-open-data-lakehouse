@@ -1,0 +1,301 @@
+version: 2
+
+models:
+  - name: mart_tax_collection_monthly
+    description: >
+      Monthly tax collection by tax group, in nominal USD and deflated to 2014
+      USD with the national general CPI. The deflator exists through the
+      December-2024 CPI vintage; later months keep nominal values only.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: period_date
+        description: First day of the collection month.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: period_year
+        description: Collection year.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: period_month
+        description: Collection month number (1-12).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: tax_group_key
+        description: Normalized tax-group key.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: tax_group_name
+        description: Tax-group display label.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: nominal_usd
+        description: Collected amount in nominal USD.
+        data_type: "decimal(18,2)"
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: real_usd_2014
+        description: Collected amount deflated to 2014 USD; null after the CPI vintage.
+        data_type: "decimal(18,2)"
+      - name: yoy_nominal
+        description: Nominal year-over-year change as a fraction (null in 2017).
+        data_type: double
+      - name: share_of_month
+        description: Fraction of that month's total collection.
+        data_type: double
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - period_date
+              - tax_group_key
+
+  - name: mart_inflation_monthly
+    description: >
+      Monthly CPI evolution for the general index and the twelve CCIF
+      divisions in every price area, with month-over-month and year-over-year
+      variations stored as fractions.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: period_date
+        description: First day of the CPI month.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: period_year
+        description: CPI year.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: period_month
+        description: CPI month number (1-12).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: price_area_key
+        description: Normalized price-area key.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_price_area')
+                field: price_area_key
+      - name: price_area_name
+        description: Human-readable price-area name.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: cpi_item_key
+        description: CCIF item key of the index.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_cpi_item')
+                field: cpi_item_key
+      - name: ccif_code
+        description: Published CCIF code.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: ccif_name
+        description: Published CCIF item name.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: level
+        description: CCIF level of the row (general or division).
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["general", "division"]
+      - name: index_value
+        description: Published CPI index value (base 2014 = 100).
+        data_type: double
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: mom
+        description: Month-over-month index change as a fraction.
+        data_type: double
+        data_tests:
+          - assert_between:
+              arguments:
+                min_value: -1
+                max_value: 10
+      - name: yoy
+        description: Year-over-year index change as a fraction.
+        data_type: double
+        data_tests:
+          - assert_between:
+              arguments:
+                min_value: -1
+                max_value: 10
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - period_date
+              - price_area_key
+              - cpi_item_key
+
+  - name: mart_tax_to_gdp_annual
+    description: >
+      Annual SRI collection compared with nominal GDP. A year is complete only
+      when the frozen BCE vintage publishes its four quarters and SRI covers
+      twelve months, which limits the usable ratio to 2017-2020.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: period_year
+        description: Calendar year.
+        data_type: integer
+        data_tests:
+          - not_null
+          - unique
+      - name: sri_collection_usd
+        description: Total SRI-administered collection in nominal USD.
+        data_type: "decimal(18,2)"
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: gdp_current_usd
+        description: Nominal GDP in USD; null when the BCE vintage has no quarters.
+        data_type: "decimal(20,2)"
+        data_tests:
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: ratio
+        description: SRI collection as a fraction of nominal GDP.
+        data_type: double
+        data_tests:
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: quarters_available
+        description: Published GDP quarters contributing to the year (0 when none).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 4
+      - name: months_available
+        description: Months with SRI collection in the year.
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 12
+      - name: is_complete
+        description: Whether both sources fully cover the year.
+        data_type: boolean
+        data_tests:
+          - not_null
+
+  - name: mart_tax_lifecycle
+    description: >
+      Lifecycle summary per normalized tax line: first and last active year,
+      number of active years and SCD2 versions, total collection and the
+      current lifecycle status.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: tax_item_nk
+        description: Natural key of the tax line.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: tax_name
+        description: Tax name from the latest SCD2 version.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: tax_group_name
+        description: Tax-group label from the latest SCD2 version.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: first_year
+        description: First year in which the tax line collected.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: last_year
+        description: Last year in which the tax line collected.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: years_active
+        description: Number of years in which the tax line collected.
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+      - name: versions_count
+        description: Number of SCD2 versions of the tax line.
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+      - name: total_collected_usd
+        description: Lifetime collection attributed to the tax line.
+        data_type: "decimal(18,2)"
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+      - name: current_status
+        description: Lifecycle status of the current SCD2 version.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["active", "inactive"]
