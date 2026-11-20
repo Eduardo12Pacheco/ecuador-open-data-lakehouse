@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,6 +17,11 @@ from ecuador_lakehouse.domain.sources import SourceFile, SourceId
 
 runner = CliRunner()
 SHA = "b" * 64
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def plain(text: str) -> str:
+    return _ANSI.sub("", text)
 
 
 def make_source_file(partition: str = "2025") -> SourceFile:
@@ -64,10 +70,11 @@ def patch_container(monkeypatch: pytest.MonkeyPatch, container: FakeContainer) -
 def test_fetch_help_lists_the_documented_options() -> None:
     result = runner.invoke(app, ["fetch", "--help"])
 
+    output = plain(result.stdout)
     assert result.exit_code == 0
-    assert "--source" in result.stdout
-    assert "--years" in result.stdout
-    assert "--accept-new-vintage" in result.stdout
+    assert "--source" in output
+    assert "--years" in output
+    assert "--accept-new-vintage" in output
 
 
 def test_fetch_invokes_the_acquire_use_case_and_prints_sha256(
