@@ -1,0 +1,249 @@
+version: 2
+
+models:
+  - name: stg_inec__cpi_index
+    description: >
+      Typed INEC consumer price index long series: one row per price area, CCIF
+      item and month, with English level names, numeric weight/index and the
+      parent code of every item.
+    columns:
+      - name: price_area_key
+        description: Normalized price-area key, checked against the reference seed.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('ref_price_area')
+                field: price_area_key
+      - name: level
+        description: English CCIF level name.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["general", "division", "group", "class", "subclass", "product"]
+      - name: weight
+        description: CCIF weight parsed from mixed comma/dot decimals.
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: ccif_code
+        description: CCIF code; its length identifies the level.
+        data_tests:
+          - not_null
+      - name: ccif_name
+        description: CCIF item display name.
+        data_tests:
+          - not_null
+      - name: period_date
+        description: First day of the CPI month parsed from the Spanish header.
+        data_tests:
+          - not_null
+      - name: index_value
+        description: CPI index value (base 2014 = 100); null when not published.
+      - name: ccif_parent_code
+        description: Parent CCIF code derived from the level prefix rule.
+      - name: _batch_id
+        description: Batch identifier of the raw partition this row came from.
+        data_tests:
+          - not_null
+      - name: _source_file
+        description: Source file name of the raw partition this row came from.
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - price_area_key
+              - ccif_code
+              - period_date
+      - assert_row_count_at_least:
+          arguments:
+            min_rows: 500000
+      - assert_no_month_gaps:
+          arguments:
+            date_column: period_date
+            group_by: price_area_key
+
+unit_tests:
+- name: parses_mixed_comma_and_dot_decimals
+  description: 1,000000 and 0.224503124 both become numeric weights.
+  model: stg_inec__cpi_index
+  given:
+    - input: source('raw', 'inec_cpi_index')
+      rows:
+        - price_area: "NACIONAL"
+          nivel: "General"
+          ponderacion_raw: "1,000000"
+          codigo_ccif: "0"
+          descripcion: "GENERAL"
+          month_label: "ene-15"
+          value_raw: "101.24"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        - price_area: "NACIONAL"
+          nivel: "División"
+          ponderacion_raw: "0.224503124"
+          codigo_ccif: "01"
+          descripcion: "Alimentos y bebidas no alcohólicas"
+          month_label: "ene-15"
+          value_raw: "101.82"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  expect:
+    rows:
+      - price_area_key: "NACIONAL"
+        level: "general"
+        weight: 1.0
+        ccif_code: "0"
+        ccif_name: "GENERAL"
+        period_date: "2015-01-01"
+        index_value: 101.24
+        ccif_parent_code: null
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+      - price_area_key: "NACIONAL"
+        level: "division"
+        weight: 0.224503124
+        ccif_code: "01"
+        ccif_name: "Alimentos y bebidas no alcohólicas"
+        period_date: "2015-01-01"
+        index_value: 101.82
+        ccif_parent_code: "0"
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+
+- name: derives_parent_codes_from_the_level_prefix_rule
+  description: Product to subclass, subclass to class, class to group, group to division, division to root.
+  model: stg_inec__cpi_index
+  given:
+    - input: source('raw', 'inec_cpi_index')
+      rows:
+        - price_area: "QUITO"
+          nivel: "General"
+          ponderacion_raw: "1,000000"
+          codigo_ccif: "0"
+          descripcion: "GENERAL"
+          month_label: "dic-24"
+          value_raw: "110.0"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        - price_area: "QUITO"
+          nivel: "División"
+          ponderacion_raw: "0.2"
+          codigo_ccif: "01"
+          descripcion: "Division"
+          month_label: "dic-24"
+          value_raw: "110.0"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        - price_area: "QUITO"
+          nivel: "Grupo"
+          ponderacion_raw: "0.1"
+          codigo_ccif: "011"
+          descripcion: "Group"
+          month_label: "dic-24"
+          value_raw: "110.0"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        - price_area: "QUITO"
+          nivel: "Clase"
+          ponderacion_raw: "0.05"
+          codigo_ccif: "0111"
+          descripcion: "Class"
+          month_label: "dic-24"
+          value_raw: "110.0"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        - price_area: "QUITO"
+          nivel: "Subclase"
+          ponderacion_raw: "0.02"
+          codigo_ccif: "01111"
+          descripcion: "Subclass"
+          month_label: "dic-24"
+          value_raw: "110.0"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        - price_area: "QUITO"
+          nivel: "Producto"
+          ponderacion_raw: "0.01"
+          codigo_ccif: "01111001"
+          descripcion: "Product"
+          month_label: "dic-24"
+          value_raw: "110.0"
+          _batch_id: "batch-c"
+          _source_file: "inec_cpi_index_2024-12.zip"
+          _source_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  expect:
+    rows:
+      - price_area_key: "QUITO"
+        level: "general"
+        weight: 1.0
+        ccif_code: "0"
+        ccif_name: "GENERAL"
+        period_date: "2024-12-01"
+        index_value: 110.0
+        ccif_parent_code: null
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+      - price_area_key: "QUITO"
+        level: "division"
+        weight: 0.2
+        ccif_code: "01"
+        ccif_name: "Division"
+        period_date: "2024-12-01"
+        index_value: 110.0
+        ccif_parent_code: "0"
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+      - price_area_key: "QUITO"
+        level: "group"
+        weight: 0.1
+        ccif_code: "011"
+        ccif_name: "Group"
+        period_date: "2024-12-01"
+        index_value: 110.0
+        ccif_parent_code: "01"
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+      - price_area_key: "QUITO"
+        level: "class"
+        weight: 0.05
+        ccif_code: "0111"
+        ccif_name: "Class"
+        period_date: "2024-12-01"
+        index_value: 110.0
+        ccif_parent_code: "011"
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+      - price_area_key: "QUITO"
+        level: "subclass"
+        weight: 0.02
+        ccif_code: "01111"
+        ccif_name: "Subclass"
+        period_date: "2024-12-01"
+        index_value: 110.0
+        ccif_parent_code: "0111"
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
+      - price_area_key: "QUITO"
+        level: "product"
+        weight: 0.01
+        ccif_code: "01111001"
+        ccif_name: "Product"
+        period_date: "2024-12-01"
+        index_value: 110.0
+        ccif_parent_code: "01111"
+        _batch_id: "batch-c"
+        _source_file: "inec_cpi_index_2024-12.zip"
