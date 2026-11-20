@@ -1,0 +1,171 @@
+version: 2
+
+models:
+  - name: int_tax_item_year_presence
+    description: >
+      Dense presence matrix of every normalized tax line (tax_key +
+      tax_subgroup_key) over every year loaded from SRI. A missing year is an
+      explicit inactive row, which makes the later gaps-and-islands SCD2 logic
+      independent of which years happen to contain data.
+    columns:
+      - name: tax_item_nk
+        description: Natural key of the tax line (normalized tax key + subgroup key).
+        data_tests:
+          - not_null
+      - name: period_year
+        description: Year loaded in the SRI source.
+        data_tests:
+          - not_null
+      - name: present
+        description: Whether the tax line collected at least once in that year.
+        data_tests:
+          - not_null
+      - name: tax_group_name
+        description: Tax-group display label observed in that year; null when absent.
+    data_tests:
+      - assert_unique_combination:
+          arguments:
+            combination_of_columns:
+              - tax_item_nk
+              - period_year
+
+  - name: int_tax_item_versions
+    description: >
+      SCD2 version islands for every tax line. Years from the first presence to
+      the latest loaded year are split whenever the lifecycle status or the tax
+      group changes, producing contiguous, non-overlapping validity ranges.
+    columns:
+      - name: tax_item_nk
+        description: Natural key of the tax line.
+        data_tests:
+          - not_null
+      - name: tax_group_name
+        description: Tax-group label carried forward through inactive years.
+        data_tests:
+          - not_null
+      - name: lifecycle_status
+        description: Whether the tax line was active in the version's year range.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["active", "inactive"]
+      - name: valid_from
+        description: First day of the first year of the version.
+        data_tests:
+          - not_null
+      - name: valid_to
+        description: Last day of the version, or 9999-12-31 for the open version.
+        data_tests:
+          - not_null
+
+unit_tests:
+  - name: continuous_presence_is_one_active_version
+    description: A tax line present in every loaded year has a single open version.
+    model: int_tax_item_versions
+    given:
+      - input: ref('int_tax_item_year_presence')
+        rows:
+          - {tax_item_nk: "IVA|IVA GENERAL", period_year: 2017, present: true, tax_group_name: "IVA"}
+          - {tax_item_nk: "IVA|IVA GENERAL", period_year: 2018, present: true, tax_group_name: "IVA"}
+          - {tax_item_nk: "IVA|IVA GENERAL", period_year: 2019, present: true, tax_group_name: "IVA"}
+    expect:
+      rows:
+        - tax_item_nk: "IVA|IVA GENERAL"
+          tax_group_name: "IVA"
+          lifecycle_status: "active"
+          valid_from: "2017-01-01"
+          valid_to: "9999-12-31"
+
+  - name: a_gap_year_creates_an_inactive_version
+    description: Active, inactive and active islands are produced around a gap.
+    model: int_tax_item_versions
+    given:
+      - input: ref('int_tax_item_year_presence')
+        rows:
+          - {tax_item_nk: "ICE|CERVEZA", period_year: 2019, present: true, tax_group_name: "ICE"}
+          - {tax_item_nk: "ICE|CERVEZA", period_year: 2020, present: false, tax_group_name: null}
+          - {tax_item_nk: "ICE|CERVEZA", period_year: 2021, present: true, tax_group_name: "ICE"}
+    expect:
+      rows:
+        - tax_item_nk: "ICE|CERVEZA"
+          tax_group_name: "ICE"
+          lifecycle_status: "active"
+          valid_from: "2019-01-01"
+          valid_to: "2019-12-31"
+        - tax_item_nk: "ICE|CERVEZA"
+          tax_group_name: "ICE"
+          lifecycle_status: "inactive"
+          valid_from: "2020-01-01"
+          valid_to: "2020-12-31"
+        - tax_item_nk: "ICE|CERVEZA"
+          tax_group_name: "ICE"
+          lifecycle_status: "active"
+          valid_from: "2021-01-01"
+          valid_to: "9999-12-31"
+
+  - name: retirement_keeps_an_open_ended_inactive_version
+    description: A tax line that disappears stays inactive until the latest loaded year.
+    model: int_tax_item_versions
+    given:
+      - input: ref('int_tax_item_year_presence')
+        rows:
+          - {tax_item_nk: "TRIBUTO|VIEJO", period_year: 2019, present: true, tax_group_name: "OTROS"}
+          - {tax_item_nk: "TRIBUTO|VIEJO", period_year: 2020, present: true, tax_group_name: "OTROS"}
+          - {tax_item_nk: "TRIBUTO|VIEJO", period_year: 2021, present: false, tax_group_name: null}
+          - {tax_item_nk: "TRIBUTO|VIEJO", period_year: 2022, present: false, tax_group_name: null}
+    expect:
+      rows:
+        - tax_item_nk: "TRIBUTO|VIEJO"
+          tax_group_name: "OTROS"
+          lifecycle_status: "active"
+          valid_from: "2019-01-01"
+          valid_to: "2020-12-31"
+        - tax_item_nk: "TRIBUTO|VIEJO"
+          tax_group_name: "OTROS"
+          lifecycle_status: "inactive"
+          valid_from: "2021-01-01"
+          valid_to: "9999-12-31"
+
+  - name: a_group_reclassification_starts_a_new_active_version
+    description: A changed tax group splits the history while the line stays active.
+    model: int_tax_item_versions
+    given:
+      - input: ref('int_tax_item_year_presence')
+        rows:
+          - {tax_item_nk: "IMPUESTO|X", period_year: 2019, present: true, tax_group_name: "GRUPO A"}
+          - {tax_item_nk: "IMPUESTO|X", period_year: 2020, present: true, tax_group_name: "GRUPO A"}
+          - {tax_item_nk: "IMPUESTO|X", period_year: 2021, present: true, tax_group_name: "GRUPO B"}
+          - {tax_item_nk: "IMPUESTO|X", period_year: 2022, present: true, tax_group_name: "GRUPO B"}
+    expect:
+      rows:
+        - tax_item_nk: "IMPUESTO|X"
+          tax_group_name: "GRUPO A"
+          lifecycle_status: "active"
+          valid_from: "2019-01-01"
+          valid_to: "2020-12-31"
+        - tax_item_nk: "IMPUESTO|X"
+          tax_group_name: "GRUPO B"
+          lifecycle_status: "active"
+          valid_from: "2021-01-01"
+          valid_to: "9999-12-31"
+
+  - name: a_line_introduced_after_the_first_year_starts_at_its_first_presence
+    description: Years before the first presence are trimmed from the spine.
+    model: int_tax_item_versions
+    given:
+      - input: ref('int_tax_item_year_presence')
+        rows:
+          - {tax_item_nk: "NUEVO|IMPUESTO", period_year: 2017, present: false, tax_group_name: null}
+          - {tax_item_nk: "NUEVO|IMPUESTO", period_year: 2018, present: false, tax_group_name: null}
+          - {tax_item_nk: "NUEVO|IMPUESTO", period_year: 2019, present: false, tax_group_name: null}
+          - {tax_item_nk: "NUEVO|IMPUESTO", period_year: 2020, present: false, tax_group_name: null}
+          - {tax_item_nk: "NUEVO|IMPUESTO", period_year: 2021, present: true, tax_group_name: "NUEVOS"}
+          - {tax_item_nk: "NUEVO|IMPUESTO", period_year: 2022, present: true, tax_group_name: "NUEVOS"}
+    expect:
+      rows:
+        - tax_item_nk: "NUEVO|IMPUESTO"
+          tax_group_name: "NUEVOS"
+          lifecycle_status: "active"
+          valid_from: "2021-01-01"
+          valid_to: "9999-12-31"
