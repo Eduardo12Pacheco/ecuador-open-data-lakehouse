@@ -16,6 +16,7 @@ from ecuador_lakehouse.cli.commands import (
     fetch,
     publish,
     sample,
+    serve,
     test,
     verify,
 )
@@ -36,6 +37,7 @@ docs.register(app)
 build.register(app)
 test.register(app)
 publish.register(app)
+serve.register(app)
 verify.register(app)
 contract.register(app)
 
