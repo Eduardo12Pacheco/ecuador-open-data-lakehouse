@@ -12,6 +12,13 @@ from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from ecuador_lakehouse.domain.batches import BatchRecord, BatchStatus
+from ecuador_lakehouse.domain.contract import ArtifactContract
+from ecuador_lakehouse.domain.manifest import (
+    ArtifactManifest,
+    ArtifactVersion,
+    QualityCounts,
+    SourceRef,
+)
 from ecuador_lakehouse.domain.quality import QualitySummary
 from ecuador_lakehouse.domain.runs import RunRecord
 from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile, SourceId
@@ -168,4 +175,96 @@ class LineageRenderer(Protocol):
 
     def render_markdown(self, manifest: Mapping[str, Any]) -> str:
         """Return the complete Markdown document for ``manifest``."""
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class TableSpec:
+    """Application-level metadata that completes the committed contract."""
+
+    kind: str
+    grain: str
+    descriptions: Mapping[str, str]
+
+    def __post_init__(self) -> None:
+        if self.kind not in {"dim", "fct", "mart"}:
+            raise ValueError(f"unknown table kind: {self.kind!r}")
+        if not self.grain.strip():
+            raise ValueError("table grain must not be empty")
+        descriptions = dict(self.descriptions)
+        object.__setattr__(self, "descriptions", descriptions)
+        if not descriptions:
+            raise ValueError("table must describe at least one column")
+
+
+@dataclass(frozen=True, slots=True)
+class PublishRequest:
+    """Everything the artifact adapter needs to publish one data product."""
+
+    source_warehouse: Path
+    out_dir: Path
+    contract: ArtifactContract
+    table_specs: Mapping[str, TableSpec]
+    generator: str
+    duckdb_version: str
+    dbt_core_version: str
+    data_mode: str
+    built_from: tuple[SourceRef, ...]
+    quality: QualityCounts
+    attribution: str
+
+    def __post_init__(self) -> None:
+        if not self.generator.strip():
+            raise ValueError("generator must not be empty")
+        if not self.attribution.strip():
+            raise ValueError("attribution must not be empty")
+        if self.data_mode not in {"sample", "full"}:
+            raise ValueError(f"unknown data mode: {self.data_mode!r}")
+        specs = dict(self.table_specs)
+        object.__setattr__(self, "table_specs", specs)
+        expected = {table.name for table in self.contract.tables}
+        missing = expected - set(specs)
+        if missing:
+            raise ValueError(f"missing table specs: {', '.join(sorted(missing))}")
+        unexpected = set(specs) - expected
+        if unexpected:
+            raise ValueError(f"table specs for unknown tables: {', '.join(sorted(unexpected))}")
+
+
+@dataclass(frozen=True, slots=True)
+class PublishResult:
+    """Location and manifest of one published artifact."""
+
+    artifact_dir: Path
+    manifest: ArtifactManifest
+
+    @property
+    def table_count(self) -> int:
+        """Number of published tables."""
+        return len(self.manifest.tables)
+
+
+@dataclass(frozen=True, slots=True)
+class VerifyResult:
+    """Outcome of verifying one published artifact."""
+
+    artifact_dir: Path
+    table_count: int
+    artifact_version: ArtifactVersion
+
+
+@runtime_checkable
+class ArtifactStore(Protocol):
+    """Publish and verify the versioned data product (S14, D19)."""
+
+    def publish(self, request: PublishRequest) -> PublishResult:
+        """Write the complete artifact described by ``request``."""
+        ...
+
+    def verify(self, artifact_dir: Path) -> VerifyResult:
+        """Re-check checksums, schemas and row counts of a published artifact."""
+        ...
+
+    def read_schema(self, warehouse_path: Path, *, base: ArtifactContract) -> ArtifactContract:
+        """Read the warehouse ``marts`` schema using ``base`` for kind and grain."""
         ...

@@ -9,7 +9,7 @@ import pytest
 
 from ecuador_lakehouse.adapters.transform.results import load_json, parse_run_results
 from ecuador_lakehouse.domain.errors import TransformError
-from ecuador_lakehouse.domain.quality import TestStatus as DbtTestStatus
+from ecuador_lakehouse.domain.quality import TestKind as DbtTestKind, TestStatus as DbtTestStatus
 
 
 def test_parses_statuses_and_uses_manifest_names() -> None:
@@ -19,6 +19,8 @@ def test_parses_statuses_and_uses_manifest_names() -> None:
             {"unique_id": "test.pkg.unique_x", "status": "fail", "failures": 3},
             {"unique_id": "test.pkg.warn_x", "status": "warn"},
             {"unique_id": "test.pkg.skip_x", "status": "skipped"},
+            {"unique_id": "unit_test.pkg.model.case", "status": "pass"},
+            {"unique_id": "model.pkg.stg_x", "status": "success"},
         ]
     }
     manifest = {
@@ -27,6 +29,8 @@ def test_parses_statuses_and_uses_manifest_names() -> None:
             "test.pkg.unique_x": {"name": "unique_x"},
             "test.pkg.warn_x": {"name": "warn_x"},
             "test.pkg.skip_x": {"name": "skip_x"},
+            "unit_test.pkg.model.case": {"name": "case"},
+            "model.pkg.stg_x": {"name": "stg_x"},
         }
     }
 
@@ -37,11 +41,16 @@ def test_parses_statuses_and_uses_manifest_names() -> None:
         DbtTestStatus.FAIL,
         DbtTestStatus.PASS,
         DbtTestStatus.SKIP,
+        DbtTestStatus.PASS,
     ]
     assert summary.outcomes[1].name == "unique_x"
     assert summary.outcomes[1].message == "3 failing rows"
     assert summary.failed == 1
     assert summary.ok is False
+    assert summary.outcomes[-1].kind is DbtTestKind.UNIT
+    assert summary.data_tests_total == 4
+    assert summary.unit_tests_total == 1
+    assert all(outcome.name != "stg_x" for outcome in summary.outcomes)
 
 
 def test_unknown_status_is_a_transform_error() -> None:

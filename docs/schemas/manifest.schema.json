@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eduardo12Pacheco/ecuador-open-data-lakehouse/docs/schemas/manifest.schema.json",
+  "title": "Ecuador lakehouse artifact manifest",
+  "description": "Machine-readable description of one published lakehouse artifact (schema_version 1.0).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_name",
+    "artifact_version",
+    "generator",
+    "duckdb_version",
+    "dbt_core_version",
+    "data_mode",
+    "built_from",
+    "tables",
+    "quality",
+    "attribution"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "artifact_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1
+    },
+    "duckdb_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dbt_core_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data_mode": {
+      "enum": ["sample", "full"]
+    },
+    "built_from": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "tables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/table"
+      }
+    },
+    "quality": {
+      "$ref": "#/$defs/quality"
+    },
+    "attribution": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "url", "license_id", "files"],
+      "properties": {
+        "source_id": {
+          "enum": ["sri_tax", "bce_cnt", "inec_cpi"]
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "license_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "sha256"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "schema",
+        "kind",
+        "grain",
+        "row_count",
+        "columns",
+        "content_sha256",
+        "parquet_file"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema": {
+          "const": "marts"
+        },
+        "kind": {
+          "enum": ["dim", "fct", "mart"]
+        },
+        "grain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/column"
+          }
+        },
+        "content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "parquet_file": {
+          "type": "string",
+          "pattern": "^parquet/[A-Za-z0-9_]+\\.parquet$"
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tests_total", "tests_passed", "unit_tests_total", "unit_tests_passed"],
+      "properties": {
+        "tests_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tests_passed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unit_tests_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unit_tests_passed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

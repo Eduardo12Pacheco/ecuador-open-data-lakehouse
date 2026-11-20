@@ -8,11 +8,12 @@ from ecuador_lakehouse.domain import quality
 
 Outcome = quality.TestOutcome
 Status = quality.TestStatus
+Kind = quality.TestKind
 QualitySummary = quality.QualitySummary
 
 
-def outcome(name: str, status: Status = Status.PASS) -> Outcome:
-    return Outcome(name=name, status=status)
+def outcome(name: str, status: Status = Status.PASS, kind: Kind = Kind.DATA) -> Outcome:
+    return Outcome(name=name, status=status, kind=kind)
 
 
 def test_test_status_values_are_stable() -> None:
@@ -61,3 +62,24 @@ def test_outcome_requires_a_name_and_message_defaults_to_empty() -> None:
 
     with pytest.raises(ValueError, match="name"):
         Outcome(name="", status=Status.PASS)
+
+
+def test_summary_splits_data_and_unit_tests() -> None:
+    summary = QualitySummary.from_outcomes(
+        [
+            outcome("not_null_x"),
+            outcome("unique_y", Status.FAIL),
+            outcome("unit_a", kind=Kind.UNIT),
+            outcome("unit_b", Status.SKIP, kind=Kind.UNIT),
+        ]
+    )
+
+    assert summary.data_tests_total == 2
+    assert summary.data_tests_passed == 1
+    assert summary.unit_tests_total == 2
+    assert summary.unit_tests_passed == 1
+    assert summary.total == 4
+
+
+def test_outcome_kind_defaults_to_data() -> None:
+    assert Outcome(name="x", status=Status.PASS).kind is Kind.DATA

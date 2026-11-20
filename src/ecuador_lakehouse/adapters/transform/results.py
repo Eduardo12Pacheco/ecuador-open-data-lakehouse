@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from ecuador_lakehouse.domain.errors import TransformError
-from ecuador_lakehouse.domain.quality import QualitySummary, TestOutcome, TestStatus
+from ecuador_lakehouse.domain.quality import (
+    QualitySummary,
+    TestKind,
+    TestOutcome,
+    TestStatus,
+)
 
 _STATUS_MAP: dict[str, TestStatus] = {
     "pass": TestStatus.PASS,
@@ -47,6 +52,14 @@ def _node_names(manifest: Mapping[str, Any] | None) -> dict[str, str]:
     }
 
 
+def _kind(unique_id: str) -> TestKind | None:
+    if unique_id.startswith("unit_test."):
+        return TestKind.UNIT
+    if unique_id.startswith("test."):
+        return TestKind.DATA
+    return None
+
+
 def parse_run_results(
     run_results: Mapping[str, Any],
     manifest: Mapping[str, Any] | None = None,
@@ -61,6 +74,11 @@ def parse_run_results(
         if not isinstance(raw, dict):
             raise TransformError("run_results.json contains a non-object result")
         unique_id = str(raw.get("unique_id", ""))
+        kind = _kind(unique_id)
+        if kind is None:
+            # ``run_results.json`` can also contain model and seed results
+            # (for example after ``dbt build``); only test nodes belong here.
+            continue
         status_text = str(raw.get("status", "")).lower()
         status = _STATUS_MAP.get(status_text)
         if not unique_id or status is None:
@@ -76,6 +94,7 @@ def parse_run_results(
                 name=names.get(unique_id, unique_id.rsplit(".", 1)[-1]),
                 status=status,
                 message=message,
+                kind=kind,
             )
         )
     return QualitySummary.from_outcomes(outcomes)
