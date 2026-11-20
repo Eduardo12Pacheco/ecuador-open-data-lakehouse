@@ -12,6 +12,8 @@ from typing import Any
 
 import pytest
 
+from ecuador_lakehouse.config import get_settings
+
 NETWORK_BLOCK_MESSAGE = "Outbound network access is blocked in tests"
 
 
@@ -53,3 +55,11 @@ def block_non_loopback_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
     monkeypatch.setattr(socket, "getaddrinfo", guarded_getaddrinfo)
+
+
+@pytest.fixture(autouse=True)
+def reset_settings_cache() -> None:
+    """Keep each test isolated from settings cached by a previous test."""
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()

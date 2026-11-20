@@ -5,6 +5,8 @@ from __future__ import annotations
 import typer
 
 from ecuador_lakehouse import __version__
+from ecuador_lakehouse.config import Settings, get_settings
+from ecuador_lakehouse.domain.errors import LakehouseError
 
 app = typer.Typer(
     name="lakehouse",
@@ -14,9 +16,19 @@ app = typer.Typer(
 )
 
 
+def _load_settings() -> Settings:
+    """Load settings, turning invalid configuration into a clean exit code 2."""
+    try:
+        return get_settings()
+    except LakehouseError as error:
+        typer.echo(f"Configuration error: {error}", err=True)
+        raise typer.Exit(code=error.exit_code) from None
+
+
 def _print_version(value: bool) -> None:
     """Print the installed package version and exit when ``--version`` is given."""
     if value:
+        _load_settings()
         typer.echo(__version__)
         raise typer.Exit()
 
@@ -32,6 +44,7 @@ def main_callback(
     ),
 ) -> None:
     """Ecuador open-data lakehouse command line."""
+    _load_settings()
 
 
 def main() -> None:
