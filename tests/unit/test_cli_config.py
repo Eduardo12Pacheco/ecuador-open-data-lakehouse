@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
+import typer
 from typer.testing import CliRunner
 
-from ecuador_lakehouse.cli.app import app
+from ecuador_lakehouse.cli.app import app, main_callback
 
 runner = CliRunner()
 
@@ -48,3 +49,16 @@ def test_valid_environment_still_prints_the_version(monkeypatch: pytest.MonkeyPa
 
     assert result.exit_code == 0
     assert result.stdout.strip() == "0.1.0"
+
+
+def test_main_callback_validates_settings() -> None:
+    main_callback(version=False)
+
+
+def test_main_callback_exits_two_for_invalid_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LAKEHOUSE_MODE", "bogus")
+
+    with pytest.raises(typer.Exit) as excinfo:
+        main_callback(version=False)
+
+    assert excinfo.value.exit_code == 2

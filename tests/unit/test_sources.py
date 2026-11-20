@@ -121,6 +121,25 @@ def test_lockfile_accepts_an_empty_license_map() -> None:
         '{"files": [], "extra": true}',
         '{"files": [{"source_id": "sri_tax", "partition": "2024", "url": "u", '
         '"filename": "f", "size_bytes": 1, "sha256": "' + SHA + '", "surprise": 1}]}',
+        '{"files": [42]}',
+        '{"files": [], "checked_at": 20261119}',
+        '{"files": [], "licenses": ["cc-by"]}',
+        '{"files": [], "schema_version": "1"}',
+        '{"files": [], "schema_version": 2}',
+        '{"files": [{"source_id": "bogus", "partition": "2024", "url": "u", '
+        '"filename": "f", "size_bytes": 1, "sha256": "' + SHA + '"}]}',
+        '{"files": [{"source_id": "sri_tax", "partition": 2024, "url": "u", '
+        '"filename": "f", "size_bytes": 1, "sha256": "' + SHA + '"}]}',
+        '{"files": [{"source_id": "sri_tax", "partition": "2024", "url": "u", '
+        '"filename": "f", "size_bytes": true, "sha256": "' + SHA + '"}]}',
+        '{"files": [{"source_id": "sri_tax", "partition": "2024", "url": "u", '
+        '"filename": "f", "size_bytes": 1, "sha256": "' + SHA + '", "mutable": "yes"}]}',
+        '{"files": [{"source_id": "sri_tax", "partition": "2024", "url": "u", '
+        '"filename": "f", "size_bytes": 1, "sha256": "' + SHA + '", "encoding_hint": 5}]}',
+        '{"files": [{"source_id": "sri_tax", "partition": "2024", "url": "u", '
+        '"filename": "f", "size_bytes": 1, "sha256": "' + SHA + '"}, '
+        '{"source_id": "sri_tax", "partition": "2024", "url": "u2", '
+        '"filename": "f2", "size_bytes": 1, "sha256": "' + SHA + '"}]}',
     ],
 )
 def test_lockfile_rejects_malformed_json(raw: str) -> None:

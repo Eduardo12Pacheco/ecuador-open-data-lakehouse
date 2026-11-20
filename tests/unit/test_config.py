@@ -58,6 +58,8 @@ def test_environment_overrides_every_documented_variable(
 def test_years_accepts_a_single_year_and_a_reversed_duplicate_free_range() -> None:
     assert Settings(years="2024").years == (2024,)
     assert Settings(years=(2026, 2017, 2017)).years == (2017, 2026)
+    assert Settings(years=2024).years == (2024,)
+    assert Settings(years=range(2020, 2022)).years == (2020, 2021)
 
 
 @pytest.mark.parametrize(
