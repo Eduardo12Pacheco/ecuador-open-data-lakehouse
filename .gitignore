@@ -9,6 +9,7 @@ dist-artifact/
 venv/
 
 # Tool caches and reports
+test-results/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
