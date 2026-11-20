@@ -32,7 +32,7 @@ def staging_build(
     tmp_path_factory: pytest.TempPathFactory,
     canonical_sample: tuple[CanonicalSample, ...],
 ) -> StagingBuild:
-    """Load the full bundled sample, then run dbt seed + staging once."""
+    """Load the full bundled sample, then build every dbt model once."""
     home = tmp_path_factory.mktemp("dbt-staging-home")
     warehouse_path = home / "warehouse.duckdb"
     warehouse = DuckDbWarehouse(warehouse_path)
@@ -53,5 +53,11 @@ def staging_build(
         home=home,
         threads=4,
     )
-    transformer.seed_and_run(select="staging")
+    transformer.seed_and_run()
     return StagingBuild(home=home, warehouse_path=warehouse_path, transformer=transformer)
+
+
+@pytest.fixture(scope="session")
+def marts_build(staging_build: StagingBuild) -> StagingBuild:
+    """Alias the fully built session warehouse for the marts test modules (T8)."""
+    return staging_build

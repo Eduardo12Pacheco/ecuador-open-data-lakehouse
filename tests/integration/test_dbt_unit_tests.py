@@ -8,9 +8,9 @@ from .conftest import StagingBuild
 
 
 def test_dbt_unit_tests_pass_and_cover_every_parsing_macro(
-    staging_build: StagingBuild,
+    marts_build: StagingBuild,
 ) -> None:
-    summary = staging_build.transformer.test(select="test_type:unit")
+    summary = marts_build.transformer.test(select="test_type:unit")
 
     assert summary.total >= 6
     assert summary.failed == 0
