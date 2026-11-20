@@ -1,0 +1,61 @@
+/*
+ * Design tokens for the static report UI (S16).
+ * Both themes are validated by tests/unit/test_contrast.py:
+ * text tokens >= 4.5:1 on every surface, chart tokens >= 3:1.
+ */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-alt: #eef1f5;
+  --text: #1a202c;
+  --text-muted: #4b5563;
+  --border: #c3ccd8;
+  --accent: #0b5cad;
+  --accent-contrast: #ffffff;
+  --focus: #0b5cad;
+  --success: #146c43;
+  --warning: #7a4b00;
+  --danger: #b42318;
+  --chart-1: #0072b2;
+  --chart-2: #c15000;
+  --chart-3: #007a5a;
+  --chart-4: #9a4b73;
+  --chart-5: #5b4bc4;
+  --chart-6: #8a6d00;
+  --chart-7: #0f7d8c;
+  --chart-8: #b02a37;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 8px 24px rgb(16 24 40 / 6%);
+  --radius: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #0f141a;
+  --surface: #171e26;
+  --surface-alt: #1f2833;
+  --text: #e6edf3;
+  --text-muted: #a8b3c1;
+  --border: #33404d;
+  --accent: #6cb6ff;
+  --accent-contrast: #08111c;
+  --focus: #6cb6ff;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --chart-1: #6cb6ff;
+  --chart-2: #ff9e64;
+  --chart-3: #4ade80;
+  --chart-4: #f0a6ca;
+  --chart-5: #b3a1ff;
+  --chart-6: #fbbf24;
+  --chart-7: #5eead4;
+  --chart-8: #ff8a8a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 32%);
+}
