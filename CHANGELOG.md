@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SHA256SUMS` lists bare file names so `sha256sum -c` works; re-running the
   release job on an existing release uploads the assets instead of failing.
 - CI security job: grants the read permission the secret scan needs on pull
-  requests and states honestly that it scans the pushed commits.
+  requests (the release caller grants it too, and a contract test pins that a
+  called workflow never asks for more than its caller) and states honestly that
+  it scans the pushed commits.
 
 ### Changed
 

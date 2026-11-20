@@ -65,6 +65,30 @@ def test_release_creates_a_github_release_with_checksums_and_notes() -> None:
     assert "--notes-file RELEASE_NOTES.md" in commands
 
 
+_LEVELS = {"none": 0, "read": 1, "write": 2}
+
+
+def _granted(permissions: object) -> dict[str, int]:
+    assert isinstance(permissions, dict)
+    return {scope: _LEVELS[level] for scope, level in permissions.items()}
+
+
+def test_called_ci_never_requests_more_than_the_release_workflow_grants() -> None:
+    """GitHub rejects the whole run (startup_failure) when a nested job asks for more."""
+    release = load_workflow(RELEASE)
+    caller = release["jobs"]["ci"].get("permissions", release["permissions"])
+    ceiling = _granted(caller)
+
+    ci = load_workflow(CI)
+    for name, job in ci["jobs"].items():
+        requested = _granted(job.get("permissions", ci["permissions"]))
+        for scope, level in requested.items():
+            assert level <= ceiling.get(scope, 0), (
+                f"ci.yml job {name!r} requests {scope}: {level} "
+                f"but release.yml only grants {ceiling.get(scope, 0)}"
+            )
+
+
 def test_actions_are_pinned_to_major_versions() -> None:
     for path in (CI, RELEASE):
         workflow = load_workflow(path)
