@@ -20,6 +20,7 @@ from ecuador_lakehouse.adapters.sources.http_fetcher import HttpSourceFetcher
 from ecuador_lakehouse.adapters.sources.sample_fetcher import SampleSourceFetcher
 from ecuador_lakehouse.adapters.transform.dbt_runner import DbtTransformer
 from ecuador_lakehouse.adapters.warehouse.duckdb_warehouse import DuckDbWarehouse
+from ecuador_lakehouse.application.pipeline import PipelineRunner, RetryPolicy
 from ecuador_lakehouse.application.ports import (
     LicenseCatalog,
     SourceFetcher,
@@ -28,12 +29,33 @@ from ecuador_lakehouse.application.ports import (
 )
 from ecuador_lakehouse.application.use_cases.acquire import AcquireSources
 from ecuador_lakehouse.application.use_cases.build_docs import BuildDocs
+from ecuador_lakehouse.application.use_cases.build_report import BuildReport
 from ecuador_lakehouse.application.use_cases.build_sample import BuildSample
 from ecuador_lakehouse.application.use_cases.load_raw import LoadRaw
+from ecuador_lakehouse.application.use_cases.pipeline_steps import (
+    AcquireStep,
+    DocsStep,
+    LoadRawStep,
+    QualityStep,
+    ReportStep,
+    TransformStep,
+)
 from ecuador_lakehouse.config import Settings, get_settings
+from ecuador_lakehouse.domain.dag import Dag, Step
 from ecuador_lakehouse.domain.errors import ConfigError
 from ecuador_lakehouse.domain.sample import SampleManifest
 from ecuador_lakehouse.domain.sources import Lockfile, SourceId
+
+PIPELINE_DAG = Dag(
+    [
+        Step("acquire"),
+        Step("load_raw", ("acquire",)),
+        Step("transform", ("load_raw",)),
+        Step("quality", ("transform",)),
+        Step("docs", ("quality",)),
+        Step("report", ("docs",)),
+    ]
+)
 
 
 def load_lockfile() -> Lockfile:
@@ -63,6 +85,9 @@ class Container:
     load_raw: LoadRaw
     transformer: DbtTransformer
     build_docs: BuildDocs
+    build_report: BuildReport
+    pipeline_acquire: AcquireSources
+    pipeline: PipelineRunner
 
     def close(self) -> None:
         """Release network resources, the warehouse lock and any other adapter."""
@@ -94,6 +119,38 @@ def build_container(settings: Settings | None = None) -> Container:
         threads=resolved.dbt_threads,
     )
     parsers = default_parsers()
+    load_raw = LoadRaw(parsers=parsers, warehouse=warehouse)
+    build_docs = BuildDocs(
+        transformer=transformer,
+        renderer=LineageMermaidRenderer(),
+        site_dir=resolved.home / "site",
+    )
+    build_report = BuildReport(
+        warehouse=warehouse,
+        site_dir=resolved.home / "site",
+        mode=resolved.mode,
+    )
+    pipeline_acquire = AcquireSources(fetcher=source_fetcher, lockfile=lockfile)
+    steps = {
+        "acquire": AcquireStep(
+            acquire_sources=pipeline_acquire,
+            lockfile=lockfile,
+            years=resolved.years,
+        ).execute,
+        "load_raw": LoadRawStep(load_raw=load_raw).execute,
+        "transform": TransformStep(transformer=transformer, warehouse=warehouse).execute,
+        "quality": QualityStep(transformer=transformer, warehouse=warehouse).execute,
+        "docs": DocsStep(build_docs=build_docs, warehouse=warehouse).execute,
+        "report": ReportStep(build_report=build_report).execute,
+    }
+    pipeline = PipelineRunner(
+        PIPELINE_DAG,
+        steps,
+        warehouse,
+        mode=resolved.mode,
+        idempotent_steps=frozenset({"acquire"}),
+        retry_policies={"acquire": RetryPolicy(max_attempts=3, delay_s=0.5)},
+    )
     return Container(
         settings=resolved,
         lockfile=lockfile,
@@ -102,13 +159,12 @@ def build_container(settings: Settings | None = None) -> Container:
         acquire_sources=AcquireSources(fetcher=download_fetcher, lockfile=lockfile),
         source_fetcher=source_fetcher,
         warehouse=warehouse,
-        load_raw=LoadRaw(parsers=parsers, warehouse=warehouse),
+        load_raw=load_raw,
         transformer=transformer,
-        build_docs=BuildDocs(
-            transformer=transformer,
-            renderer=LineageMermaidRenderer(),
-            site_dir=resolved.home / "site",
-        ),
+        build_docs=build_docs,
+        build_report=build_report,
+        pipeline_acquire=pipeline_acquire,
+        pipeline=pipeline,
     )
 
 
