@@ -47,6 +47,7 @@ class HttpSourceFetcher:
         self,
         home: Path,
         *,
+        cache_dir: Path | None = None,
         timeout_s: float = 30.0,
         retries: int = 3,
         max_bytes: int = DEFAULT_MAX_BYTES,
@@ -54,7 +55,7 @@ class HttpSourceFetcher:
         sleep: Callable[[float], None] = time.sleep,
         allowed_hosts: frozenset[str] = DEFAULT_ALLOWED_HOSTS,
     ) -> None:
-        self._cache_root = home / "cache"
+        self._cache_root = cache_dir if cache_dir is not None else home / "cache"
         self._ledger = VintageLedger(self._cache_root)
         self._client = httpx.Client(
             transport=transport,

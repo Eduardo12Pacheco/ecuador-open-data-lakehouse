@@ -5,7 +5,7 @@ from __future__ import annotations
 import typer
 
 from ecuador_lakehouse import __version__
-from ecuador_lakehouse.cli.commands import fetch
+from ecuador_lakehouse.cli.commands import doctor, fetch, sample
 from ecuador_lakehouse.config import Settings, get_settings
 from ecuador_lakehouse.domain.errors import LakehouseError
 
@@ -16,6 +16,8 @@ app = typer.Typer(
     add_completion=False,
 )
 fetch.register(app)
+sample.register(app)
+doctor.register(app)
 
 
 def _load_settings() -> Settings:

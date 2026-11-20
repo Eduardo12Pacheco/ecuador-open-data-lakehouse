@@ -8,14 +8,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import resources
+from pathlib import Path
 
+from ecuador_lakehouse import __version__
+from ecuador_lakehouse.adapters.parsers.bce_cnt import BceCntParser
+from ecuador_lakehouse.adapters.parsers.inec_cpi import InecCpiParser
+from ecuador_lakehouse.adapters.parsers.sri_tax import SriTaxParser
 from ecuador_lakehouse.adapters.sources.ckan_catalog import CkanCatalog
 from ecuador_lakehouse.adapters.sources.http_fetcher import HttpSourceFetcher
-from ecuador_lakehouse.application.ports import LicenseCatalog, SourceFetcher
+from ecuador_lakehouse.adapters.sources.sample_fetcher import SampleSourceFetcher
+from ecuador_lakehouse.application.ports import LicenseCatalog, SourceFetcher, SourceParser
 from ecuador_lakehouse.application.use_cases.acquire import AcquireSources
+from ecuador_lakehouse.application.use_cases.build_sample import BuildSample
 from ecuador_lakehouse.config import Settings, get_settings
 from ecuador_lakehouse.domain.errors import ConfigError
-from ecuador_lakehouse.domain.sources import Lockfile
+from ecuador_lakehouse.domain.sample import SampleManifest
+from ecuador_lakehouse.domain.sources import Lockfile, SourceId
 
 
 def load_lockfile() -> Lockfile:
@@ -64,3 +72,55 @@ def build_container(settings: Settings | None = None) -> Container:
         license_catalog=license_catalog,
         acquire_sources=AcquireSources(fetcher=source_fetcher, lockfile=lockfile),
     )
+
+
+def package_path(*parts: str) -> Path:
+    """Return a filesystem path to a packaged resource (editable installs and wheels)."""
+    return Path(str(resources.files("ecuador_lakehouse").joinpath(*parts)))
+
+
+def load_sample_manifest() -> SampleManifest:
+    """Load and validate the manifest of the bundled offline sample."""
+    return SampleSourceFetcher.load_manifest()
+
+
+def default_parsers() -> dict[SourceId, SourceParser]:
+    """Compose the parser Strategy registry keyed by source."""
+    return {
+        SourceId.SRI_TAX: SriTaxParser(),
+        SourceId.BCE_CNT: BceCntParser(),
+        SourceId.INEC_CPI: InecCpiParser(),
+    }
+
+
+def build_sample_builder(
+    settings: Settings,
+    *,
+    cache_dir: Path | None = None,
+    output_dir: Path | None = None,
+    seed_dir: Path | None = None,
+) -> BuildSample:
+    """Wire the maintainer sample builder (network fetcher + parser registry)."""
+    fetcher = HttpSourceFetcher(
+        settings.home,
+        cache_dir=cache_dir,
+        timeout_s=settings.http_timeout_s,
+        retries=settings.http_retries,
+    )
+    return BuildSample(
+        fetcher=fetcher,
+        lockfile=load_lockfile(),
+        parsers=default_parsers(),
+        sample_dir=output_dir if output_dir is not None else package_path("sample_data"),
+        seed_dir=seed_dir if seed_dir is not None else package_path("dbt_project", "seeds"),
+        builder_version=__version__,
+    )
+
+
+def verify_sample_integrity(settings: Settings) -> int:
+    """Verify every bundled sample file against its manifest and return the count."""
+    fetcher = SampleSourceFetcher(
+        load_sample_manifest(),
+        settings.home / "cache",
+    )
+    return fetcher.verify_all()
