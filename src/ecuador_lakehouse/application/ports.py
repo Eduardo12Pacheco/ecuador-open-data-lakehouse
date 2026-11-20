@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile
+from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile, SourceId
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +24,35 @@ class FetchResult:
     from_cache: bool
     checksum_verified: bool
     new_vintage: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedPartition:
+    """A structurally extracted partition written as canonical UTF-8 CSV."""
+
+    source_id: SourceId
+    partition: str
+    path: Path
+    row_count: int
+
+    def __post_init__(self) -> None:
+        if not self.partition.strip():
+            raise ValueError("partition must not be empty")
+        if self.row_count < 0:
+            raise ValueError(f"row_count must be non-negative: {self.row_count!r}")
+
+
+@runtime_checkable
+class SourceParser(Protocol):
+    """Strategy that turns one upstream file into canonical CSV (D4, D5)."""
+
+    source_id: SourceId
+
+    def parse(
+        self, path: Path, partition: str, *, output_dir: Path | None = None
+    ) -> ParsedPartition:
+        """Extract ``path`` into canonical UTF-8 CSV and report the row count."""
+        ...
 
 
 @runtime_checkable

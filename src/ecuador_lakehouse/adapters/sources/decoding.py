@@ -1,64 +1,24 @@
 """Encoding detection and streaming decoding for upstream text files (D13).
 
-The policy is deliberately narrow: try UTF-8 (with an optional BOM) first and
-fall back to cp1252 exactly once. ``errors="ignore"`` is forbidden because it
-silently corrupts real values; files that decode under neither codec are
-rejected with :class:`SourceSchemaError`.
+The byte-level policy lives in :mod:`ecuador_lakehouse.domain.decoding` so the
+parser adapters apply exactly the same rules. This module only adds filesystem
+access: detection from a prefix sample and a line iterator for large files.
 """
 
 from __future__ import annotations
 
-import codecs
 from collections.abc import Iterator
 from pathlib import Path
 
+from ecuador_lakehouse.domain.decoding import (
+    decode_bytes,
+    detect_encoding_from_sample,
+)
 from ecuador_lakehouse.domain.errors import SourceSchemaError
 
-_UTF8_BOM = codecs.BOM_UTF8
 _DEFAULT_SAMPLE_BYTES = 64 * 1024
-_TAIL_BYTES = 3
 
-
-def _decode_utf8(data: bytes, *, final: bool) -> tuple[str, str] | None:
-    """Return ``(text, encoding_name)`` when ``data`` is valid UTF-8, else ``None``."""
-    encoding = "utf-8-sig" if data.startswith(_UTF8_BOM) else "utf-8"
-    decoder = codecs.getincrementaldecoder(encoding)("strict")
-    try:
-        text = decoder.decode(data, final=final)
-    except UnicodeDecodeError as exc:
-        if not final and exc.start >= len(data) - _TAIL_BYTES:
-            # The sample ended in the middle of a multibyte sequence. The file
-            # starts as UTF-8; the next chunk continues the same character.
-            try:
-                return decoder.decode(b"", final=True), encoding
-            except UnicodeDecodeError:
-                pass
-        return None
-    return text, encoding
-
-
-def _decode_cp1252(data: bytes) -> str | None:
-    try:
-        return data.decode("cp1252", errors="strict")
-    except UnicodeDecodeError:
-        return None
-
-
-def _decode_sample(sample: bytes, *, final: bool) -> tuple[str, str]:
-    decoded = _decode_utf8(sample, final=final)
-    if decoded is not None:
-        return decoded
-    cp1252_text = _decode_cp1252(sample)
-    if cp1252_text is None:
-        raise SourceSchemaError(
-            "cannot decode source file: neither UTF-8 nor cp1252 accepted the bytes"
-        )
-    return cp1252_text, "cp1252"
-
-
-def decode_bytes(data: bytes) -> tuple[str, str]:
-    """Decode a complete byte string, returning ``(text, encoding_name)``."""
-    return _decode_sample(data, final=True)
+__all__ = ["decode_bytes", "detect_encoding", "iter_decoded_lines"]
 
 
 def detect_encoding(path: Path, *, sample_size: int = _DEFAULT_SAMPLE_BYTES) -> str:
@@ -68,8 +28,7 @@ def detect_encoding(path: Path, *, sample_size: int = _DEFAULT_SAMPLE_BYTES) -> 
     with path.open("rb") as handle:
         sample = handle.read(sample_size)
         complete = len(sample) < sample_size
-    _text, encoding = _decode_sample(sample, final=complete)
-    return encoding
+    return detect_encoding_from_sample(sample, complete=complete)
 
 
 def iter_decoded_lines(path: Path, *, sample_size: int = _DEFAULT_SAMPLE_BYTES) -> Iterator[str]:
