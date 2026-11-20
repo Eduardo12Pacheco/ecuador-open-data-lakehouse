@@ -13,6 +13,10 @@ y un reporte offline.
 
 ![El reporte recorriendo las páginas de resumen, impuestos, precios y macro](docs/media/demo.gif)
 
+| Tema claro | Tema oscuro |
+| --- | --- |
+| ![Página de resumen, tema claro](docs/media/index-light.png) | ![Página de resumen, tema oscuro](docs/media/index-dark.png) |
+
 ## Qué hace
 
 - **Adquiere tres fuentes reales** con URLs fijadas, checksums SHA-256, evidencia

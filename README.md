@@ -12,6 +12,10 @@ data product and an offline report.
 
 ![The report UI walking through the overview, tax, prices and macro pages](docs/media/demo.gif)
 
+| Light theme | Dark theme |
+| --- | --- |
+| ![Overview page, light theme](docs/media/index-light.png) | ![Overview page, dark theme](docs/media/index-dark.png) |
+
 ## What it does
 
 - **Acquires three real sources** with pinned URLs, SHA-256 checksums, license
