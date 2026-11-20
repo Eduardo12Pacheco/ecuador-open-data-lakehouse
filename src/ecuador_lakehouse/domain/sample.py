@@ -260,8 +260,17 @@ class SampleBuildReport:
 
     files: tuple[SampleFile, ...] = ()
     control_totals: tuple[ControlTotal, ...] = field(default_factory=tuple)
+    cached: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "files", tuple(sorted(self.files, key=lambda entry: entry.name)))
+        object.__setattr__(self, "cached", tuple(sorted(self.cached)))
 
     @property
     def total_bytes(self) -> int:
         """Total size of the regenerated sample in bytes."""
         return sum(entry.size_bytes for entry in self.files)
+
+    def is_cached(self, name: str) -> bool:
+        """Return whether ``name`` was served from the existing cache."""
+        return name in self.cached
