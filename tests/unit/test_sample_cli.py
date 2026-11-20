@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 
 import pytest
@@ -13,6 +14,11 @@ from ecuador_lakehouse.domain.sample import ControlTotal, SampleBuildReport, Sam
 from ecuador_lakehouse.domain.sources import SourceId
 
 runner = CliRunner()
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def plain(text: str) -> str:
+    return _ANSI.sub("", text)
 
 
 def test_root_help_lists_the_sample_and_doctor_commands() -> None:
@@ -26,9 +32,10 @@ def test_root_help_lists_the_sample_and_doctor_commands() -> None:
 def test_sample_build_help_lists_the_maintainer_options() -> None:
     result = runner.invoke(app, ["sample", "build", "--help"])
 
+    output = plain(result.stdout)
     assert result.exit_code == 0
     for option in ("--years", "--cache-dir", "--output-dir", "--seed-dir"):
-        assert option in result.output
+        assert option in output
 
 
 def test_sample_build_rejects_invalid_years_with_exit_two() -> None:
