@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-from tests.conftest import CanonicalSample
 
 from ecuador_lakehouse.adapters.sources.sample_fetcher import SampleSourceFetcher
 from ecuador_lakehouse.adapters.warehouse.duckdb_warehouse import DuckDbWarehouse
@@ -19,6 +18,7 @@ from ecuador_lakehouse.container import default_parsers, load_lockfile, load_sam
 from ecuador_lakehouse.domain.batches import BatchStatus, make_batch_id
 from ecuador_lakehouse.domain.errors import LakehouseError, SourceSchemaError
 from ecuador_lakehouse.domain.sources import SourceId
+from tests.conftest import CanonicalSample
 
 SRI_COLUMNS = (
     "anio",
