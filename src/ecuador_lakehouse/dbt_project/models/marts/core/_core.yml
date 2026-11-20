@@ -1,0 +1,301 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: >
+      Conformed monthly date dimension spanning every month covered by any
+      source, from the earliest BCE quarter to the latest SRI month.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: month_key
+        description: Surrogate month key in YYYYMM form.
+        data_type: integer
+        data_tests:
+          - not_null
+          - unique
+          - assert_between:
+              arguments:
+                min_value: 190001
+                max_value: 210012
+      - name: month_start_date
+        description: First day of the month.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: year
+        description: Calendar year.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: quarter
+        description: Calendar quarter number (1-4).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 4
+      - name: month
+        description: Calendar month number (1-12).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 12
+      - name: month_name_es
+        description: Spanish month name from a fixed table.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: quarter_key
+        description: Quarter key such as 2019Q3.
+        data_type: varchar
+        data_tests:
+          - not_null
+
+  - name: dim_quarter
+    description: >
+      Conformed quarterly dimension derived from the BCE national-accounts
+      quarters (2000Q1-2021Q1 in the bundled sample).
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: quarter_key
+        description: Quarter key such as 2019Q3.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: year
+        description: Calendar year of the quarter.
+        data_type: integer
+        data_tests:
+          - not_null
+      - name: quarter
+        description: Calendar quarter number (1-4).
+        data_type: integer
+        data_tests:
+          - not_null
+          - assert_between:
+              arguments:
+                min_value: 1
+                max_value: 4
+      - name: quarter_start_date
+        description: First day of the quarter.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: quarter_end_date
+        description: Last day of the quarter.
+        data_type: date
+        data_tests:
+          - not_null
+
+  - name: dim_geography
+    description: >
+      Conformed province/canton dimension. Province grain rows use the
+      NO DESAGREGADO placeholder canton until full-mode data provides cantons.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: geography_key
+        description: Deterministic surrogate key of province and canton.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: province_key
+        description: Normalized province key.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: province_name
+        description: Human-readable province name from the reference seed.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: canton_key
+        description: Normalized canton key, or NO DESAGREGADO at province grain.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: canton_name
+        description: Canton display name, or NO DESAGREGADO at province grain.
+        data_type: varchar
+        data_tests:
+          - not_null
+
+  - name: dim_price_area
+    description: Controlled vocabulary of the 12 INEC price areas.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: price_area_key
+        description: Normalized price-area key.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: price_area_name
+        description: Human-readable price-area name.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: area_kind
+        description: Area level (national, region or city).
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["national", "region", "city"]
+
+  - name: dim_cpi_item
+    description: >
+      Conformed CCIF item dimension covering the six CPI hierarchy levels of
+      the 2014-base INEC index.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: cpi_item_key
+        description: Deterministic surrogate key of the CCIF code.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: ccif_code
+        description: Official CCIF code.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: level
+        description: English CCIF level name.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["general", "division", "group", "class", "subclass", "product"]
+      - name: ccif_parent_code
+        description: Parent CCIF code derived from the level prefix rule.
+        data_type: varchar
+      - name: ccif_name
+        description: CCIF item display name.
+        data_type: varchar
+        data_tests:
+          - not_null
+
+  - name: dim_national_account_item
+    description: >
+      Conformed national-accounts item dimension: the 45 BCE industries plus
+      the eight published GDP aggregates, excluding product-level P### rows.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: account_item_key
+        description: Deterministic surrogate key of the BCE account code.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: account_code
+        description: BCE account code (I001-I045 and the eight aggregates).
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: item_name
+        description: Human-readable account name.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: kind
+        description: Item kind (industry or one of the GDP aggregate roles).
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - industry
+                  - vab_total
+                  - other_gdp_elements
+                  - gdp_total
+                  - household_consumption
+                  - government_consumption
+                  - gross_fixed_capital
+                  - exports
+                  - imports
+
+  - name: dim_tax_item
+    description: >
+      SCD2 tax-line dimension: one row per contiguous lifecycle/group version
+      with validity dates and exactly one current version per natural key.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: tax_item_key
+        description: Deterministic surrogate key of natural key and valid_from.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - unique
+      - name: tax_item_nk
+        description: Natural key (normalized tax key + subgroup key).
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: tax_group_name
+        description: Tax-group display label for this version.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: tax_subgroup_name
+        description: Tax-subgroup display label from the most recent present year.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: tax_name
+        description: Tax display label from the most recent present year.
+        data_type: varchar
+        data_tests:
+          - not_null
+      - name: lifecycle_status
+        description: Whether the tax line was active during this version.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["active", "inactive"]
+      - name: valid_from
+        description: First day of the version.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: valid_to
+        description: Last day of the version, or 9999-12-31 when open.
+        data_type: date
+        data_tests:
+          - not_null
+      - name: is_current
+        description: Whether this is the open-ended version of the natural key.
+        data_type: boolean
+        data_tests:
+          - not_null
+    data_tests:
+      - assert_scd2_integrity:
+          arguments:
+            natural_key: tax_item_nk
