@@ -17,9 +17,16 @@ from ecuador_lakehouse.adapters.parsers.sri_tax import SriTaxParser
 from ecuador_lakehouse.adapters.sources.ckan_catalog import CkanCatalog
 from ecuador_lakehouse.adapters.sources.http_fetcher import HttpSourceFetcher
 from ecuador_lakehouse.adapters.sources.sample_fetcher import SampleSourceFetcher
-from ecuador_lakehouse.application.ports import LicenseCatalog, SourceFetcher, SourceParser
+from ecuador_lakehouse.adapters.warehouse.duckdb_warehouse import DuckDbWarehouse
+from ecuador_lakehouse.application.ports import (
+    LicenseCatalog,
+    SourceFetcher,
+    SourceParser,
+    Warehouse,
+)
 from ecuador_lakehouse.application.use_cases.acquire import AcquireSources
 from ecuador_lakehouse.application.use_cases.build_sample import BuildSample
+from ecuador_lakehouse.application.use_cases.load_raw import LoadRaw
 from ecuador_lakehouse.config import Settings, get_settings
 from ecuador_lakehouse.domain.errors import ConfigError
 from ecuador_lakehouse.domain.sample import SampleManifest
@@ -45,32 +52,57 @@ class Container:
 
     settings: Settings
     lockfile: Lockfile
-    source_fetcher: SourceFetcher
+    download_fetcher: SourceFetcher
     license_catalog: LicenseCatalog
     acquire_sources: AcquireSources
+    source_fetcher: SourceFetcher
+    warehouse: Warehouse
+    load_raw: LoadRaw
 
     def close(self) -> None:
-        """Release network resources held by the wired adapters."""
+        """Release network resources, the warehouse lock and any other adapter."""
+        self.download_fetcher.close()
         self.source_fetcher.close()
         self.license_catalog.close()
+        self.warehouse.close()
 
 
 def build_container(settings: Settings | None = None) -> Container:
     """Build the container from explicit settings or the process environment."""
     resolved = settings if settings is not None else get_settings()
     lockfile = load_lockfile()
-    source_fetcher = HttpSourceFetcher(
+    download_fetcher = HttpSourceFetcher(
         resolved.home,
         timeout_s=resolved.http_timeout_s,
         retries=resolved.http_retries,
     )
+    source_fetcher = build_source_fetcher(resolved)
     license_catalog = CkanCatalog(timeout_s=resolved.http_timeout_s)
+    warehouse = DuckDbWarehouse(
+        resolved.home / "warehouse.duckdb",
+        mode=resolved.mode,
+    )
+    parsers = default_parsers()
     return Container(
         settings=resolved,
         lockfile=lockfile,
-        source_fetcher=source_fetcher,
+        download_fetcher=download_fetcher,
         license_catalog=license_catalog,
-        acquire_sources=AcquireSources(fetcher=source_fetcher, lockfile=lockfile),
+        acquire_sources=AcquireSources(fetcher=download_fetcher, lockfile=lockfile),
+        source_fetcher=source_fetcher,
+        warehouse=warehouse,
+        load_raw=LoadRaw(parsers=parsers, warehouse=warehouse),
+    )
+
+
+def build_source_fetcher(settings: Settings) -> SourceFetcher:
+    """Select the acquisition Strategy for the configured mode (S2, S4)."""
+    if settings.mode == "sample":
+        return SampleSourceFetcher(load_sample_manifest(), settings.home / "cache")
+    return HttpSourceFetcher(
+        settings.home,
+        timeout_s=settings.http_timeout_s,
+        retries=settings.http_retries,
     )
 
 
