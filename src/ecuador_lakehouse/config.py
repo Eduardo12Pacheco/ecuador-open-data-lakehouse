@@ -78,6 +78,17 @@ class Settings(BaseSettings):
         return unique
 
 
+def parse_years(raw: str) -> tuple[int, ...]:
+    """Parse ``2024`` / ``2019,2021-2022`` into a sorted, de-duplicated tuple."""
+    years = _parse_year_selection(raw)
+    unique = tuple(sorted(set(years)))
+    if not unique:
+        raise ValueError("years must not be empty")
+    if any(year < _MIN_YEAR or year > _MAX_YEAR for year in unique):
+        raise ValueError(f"years must be between {_MIN_YEAR} and {_MAX_YEAR}")
+    return unique
+
+
 def _parse_year_selection(raw: str) -> tuple[int, ...]:
     text = raw.strip()
     if not text:
