@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "builder_version": "0.1.0",
+  "checked_at": "2026-11-19",
+  "files": [
+    {
+      "name": "bce_cnt_quarterly.csv.gz",
+      "source_id": "bce_cnt",
+      "partition": "2000Q1-2021Q1",
+      "bytes": 433941,
+      "sha256": "51520f8a755ffbc8a3c5bf1262ac10bbaac421d41510e32e52c9fba756b60cce",
+      "rows": 32470,
+      "derived_from_sha256": "b90e0e5a403a44ecd862969b72c6fc900f730e62d7b4cffecaa55116ed81e187"
+    },
+    {
+      "name": "inec_cpi_index_2024-12.zip",
+      "source_id": "inec_cpi",
+      "partition": "2024-12",
+      "bytes": 1473088,
+      "sha256": "50a5bd0c6daceee265b7f7febc73904c44467d98c214daaff98a518876933d7b",
+      "rows": 911520,
+      "derived_from_sha256": "e7b854b4f422d23f622e3c474ebc47a0bc46caa9d15f0a3670bce7f67fc697f4"
+    },
+    {
+      "name": "sri_tax_collection_2017.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2017",
+      "bytes": 212680,
+      "sha256": "f78b274fe4b82b0377e90021b47ed059b4fa59926a90b79051bca11a9429f950",
+      "rows": 22679,
+      "derived_from_sha256": "dd14c281d082417342daa2e3060ba1df759f2c29a2f7144e4ce91e62a79753d4"
+    },
+    {
+      "name": "sri_tax_collection_2018.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2018",
+      "bytes": 212623,
+      "sha256": "70b5644c1075bf4d17ec0b797073186802b6adde10fbb32f4bfb8b63218454bc",
+      "rows": 22777,
+      "derived_from_sha256": "5159954189b7e771b45e8a8f39dced83c1ea555a2044e277ad92dc9a8a4c40a2"
+    },
+    {
+      "name": "sri_tax_collection_2019.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2019",
+      "bytes": 223491,
+      "sha256": "14054fcb223992397888bebaac63c29acfe61d1ed9041230a44f0fbf67063dad",
+      "rows": 24035,
+      "derived_from_sha256": "2d109fe8c4419086c17ae11c74095a87d7bb30a3bfe90f6aa1445700ffd475df"
+    },
+    {
+      "name": "sri_tax_collection_2020.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2020",
+      "bytes": 220928,
+      "sha256": "9c8418fb86c2c0b22d6a07a95ec94c697352d08056af68093af1886237786bce",
+      "rows": 23839,
+      "derived_from_sha256": "20e51bafc4cb4d49edacc6ee346bff7a5fcc2237bbc8f041163dc3bab65b1903"
+    },
+    {
+      "name": "sri_tax_collection_2021.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2021",
+      "bytes": 235727,
+      "sha256": "c2975aadb04cc7942fc74924be4885ad1c4ec84fd45db5ffc34f052130d38418",
+      "rows": 25260,
+      "derived_from_sha256": "bf088d16738ab9e4bca10803155680e80564107f320034e8c8b37ebd200845fe"
+    },
+    {
+      "name": "sri_tax_collection_2022.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2022",
+      "bytes": 240798,
+      "sha256": "d4e5bbb173b975e61a54475a749d52b2ad2bb2f255bd18bae08b787c4fd01389",
+      "rows": 25889,
+      "derived_from_sha256": "7a7f106f64cf0070377b4898c06907bdc50c293763050630bc742601d30b1b69"
+    },
+    {
+      "name": "sri_tax_collection_2023.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2023",
+      "bytes": 236910,
+      "sha256": "9c18c245be1f5d9d5bec490caac65763747c9480a54e632688773466e0816d76",
+      "rows": 25519,
+      "derived_from_sha256": "e6e80b5cdbae088e7ab4f4e4be3b30b75faf1df81edeb4cca2c3f52001f10c51"
+    },
+    {
+      "name": "sri_tax_collection_2024.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2024",
+      "bytes": 226248,
+      "sha256": "0c76aac73de3edb79124841fece251780f5ee9f9f0f6cf7238be8ddea2c67df2",
+      "rows": 24423,
+      "derived_from_sha256": "f5ffc07af3666084f2de1904ae198f3b48d9fe219176ca7039109e4d3040e173"
+    },
+    {
+      "name": "sri_tax_collection_2025.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2025",
+      "bytes": 230998,
+      "sha256": "16f67f34e8a02daf1815091232adbba02d337bc049f13bdc1cc8a68bba6b6122",
+      "rows": 25348,
+      "derived_from_sha256": "d6ec28197b6b85f2ce05cf12c076d34556e7c99cff49e4ad6d0995639fed1c4d"
+    },
+    {
+      "name": "sri_tax_collection_2026.csv.gz",
+      "source_id": "sri_tax",
+      "partition": "2026",
+      "bytes": 196965,
+      "sha256": "6d08de148019689d9f9933f47d2d521d9e3fff3c05193dc152077d0b6a15c336",
+      "rows": 21548,
+      "derived_from_sha256": "90878717f7faadaf5f3e815ca35c6164b059ae97b7ef8b8722e7b843918b420f"
+    }
+  ]
+}
