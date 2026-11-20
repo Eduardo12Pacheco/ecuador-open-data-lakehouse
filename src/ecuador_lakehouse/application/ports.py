@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
+from ecuador_lakehouse.domain.batches import BatchRecord, BatchStatus
 from ecuador_lakehouse.domain.sources import LicenseInfo, SourceFile, SourceId
 
 
@@ -78,4 +79,39 @@ class LicenseCatalog(Protocol):
 
     def close(self) -> None:
         """Release any network resources held by the catalogue adapter."""
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class LoadResult:
+    """Outcome of loading one canonical partition into the raw layer (S6)."""
+
+    source_id: SourceId
+    partition: str
+    batch_id: str
+    status: BatchStatus
+    row_count: int
+
+
+@runtime_checkable
+class Warehouse(Protocol):
+    """Raw-layer repository plus the one-transaction partition load (S6, D22)."""
+
+    def load_partition(
+        self,
+        source_id: SourceId,
+        partition: str,
+        canonical_csv: Path,
+        sha256: str,
+        source_file: str,
+    ) -> LoadResult:
+        """Load a canonical CSV as one unit of work, skipping an identical vintage."""
+        ...
+
+    def ledger(self) -> tuple[BatchRecord, ...]:
+        """Return the append-only batch ledger ordered by load time."""
+        ...
+
+    def close(self) -> None:
+        """Flush and release the embedded database file."""
         ...
