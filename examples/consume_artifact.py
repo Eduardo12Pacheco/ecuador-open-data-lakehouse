@@ -5,8 +5,9 @@ Usage:
 
 The script deliberately imports nothing from ``ecuador_lakehouse``: a sibling
 project only needs the DuckDB file (or the per-table Parquet files) and the
-manifest. It prints the top five tax groups of the latest published year and the
-latest complete SRI/GDP ratio.
+manifest. It prints the top five tax groups of the latest published year (with the
+number of months loaded, since the current year is partial) and the latest complete
+SRI/GDP ratio.
 """
 
 from __future__ import annotations
@@ -43,12 +44,18 @@ def main(argv: list[str]) -> int:
             "GROUP BY tax_group_name ORDER BY total DESC LIMIT 5",
             [year],
         ).fetchall()
+        months = connection.execute(
+            "SELECT count(DISTINCT period_date) FROM marts.mart_tax_collection_monthly "
+            "WHERE period_year = ?",
+            [year],
+        ).fetchone()
         ratio = connection.execute(
             "SELECT period_year, ratio FROM marts.mart_tax_to_gdp_annual "
             "WHERE is_complete ORDER BY period_year DESC LIMIT 1"
         ).fetchone()
 
-    sys.stdout.write(f"Latest tax year: {year}\n")
+    months_loaded = int(months[0]) if months is not None else 0
+    sys.stdout.write(f"Latest tax year: {year} ({months_loaded} of 12 months loaded)\n")
     for rank, (name, total) in enumerate(groups, start=1):
         sys.stdout.write(f"  {rank}. {name}: USD {float(total):,.2f}\n")
     if ratio is not None:
