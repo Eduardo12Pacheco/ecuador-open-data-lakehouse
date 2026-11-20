@@ -1,0 +1,91 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Untyped raw layer loaded by the Python EL adapters. Every source column is
+      VARCHAR so typing and cleaning happen exclusively in dbt (D4).
+    schema: raw
+    tables:
+      - name: sri_tax_collection
+        description: >
+          Province-grain SRI monthly tax collection, one partition per year,
+          canonical UTF-8 CSV loaded from the bundled sample or the pinned
+          upstream files.
+        columns:
+          - name: anio
+            description: Collection year as it appears in the SRI file.
+          - name: mes_label
+            description: Spanish month label such as "01 Enero".
+          - name: grupo
+            description: Tax group (GRUPO_IMPUESTO) display label.
+          - name: subgrupo
+            description: Tax subgroup (SUBGRUPO_IMPUESTO) display label.
+          - name: impuesto
+            description: Specific tax name (IMPUESTO) display label.
+          - name: tipo_contribuyente
+            description: Taxpayer type (SOCIEDADES, PERSONAS NATURALES, NO TIENE).
+          - name: provincia
+            description: Province display label as published by SRI.
+          - name: canton
+            description: Canton display label; empty when the sample is province grain only.
+          - name: valor_raw
+            description: Collected amount in USD with a decimal comma.
+          - name: _batch_id
+            description: Deterministic batch identifier of the load that produced the row.
+          - name: _source_file
+            description: Upstream or bundled file name the row came from.
+          - name: _source_sha256
+            description: SHA-256 of the source file the row came from.
+      - name: bce_cnt_quarterly
+        description: >
+          BCE quarterly national accounts, verbatim source bytes decoded to the
+          canonical long layout (one row per variable, quarter and price basis).
+        columns:
+          - name: tipo_variable
+            description: Price basis label in Spanish (constantes or corrientes).
+          - name: variable
+            description: National-accounts variable description.
+          - name: codigo
+            description: Industry or aggregate code (I001-I045, IVAB*, PGCF*, P*).
+          - name: descripcion
+            description: Industry or aggregate display name.
+          - name: unidades
+            description: Unit description as published by BCE.
+          - name: anio
+            description: Year as text.
+          - name: trimestre
+            description: Quarter number as text.
+          - name: valor_raw
+            description: Value in thousand USD with comma thousands separators, empty when missing.
+          - name: _batch_id
+            description: Deterministic batch identifier of the load that produced the row.
+          - name: _source_file
+            description: Upstream or bundled file name the row came from.
+          - name: _source_sha256
+            description: SHA-256 of the source file the row came from.
+      - name: inec_cpi_index
+        description: >
+          INEC consumer price index long series, one row per price area, CCIF
+          item and month, melted from the wide published CSV files.
+        columns:
+          - name: price_area
+            description: Normalized price area key (NACIONAL, REGION SIERRA, cities).
+          - name: nivel
+            description: Spanish CCIF level (General, División, Grupo, Clase, Subclase, Producto).
+          - name: ponderacion_raw
+            description: CCIF weight with mixed comma or dot decimals.
+          - name: codigo_ccif
+            description: CCIF code; its length identifies the level.
+          - name: descripcion
+            description: CCIF item display name.
+          - name: month_label
+            description: Spanish month header such as "ene-15".
+          - name: value_raw
+            description: Index value with a dot decimal, empty when not published.
+          - name: _batch_id
+            description: Deterministic batch identifier of the load that produced the row.
+          - name: _source_file
+            description: Upstream or bundled file name the row came from.
+          - name: _source_sha256
+            description: SHA-256 of the source file the row came from.

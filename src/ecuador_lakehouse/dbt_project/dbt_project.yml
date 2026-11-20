@@ -1,0 +1,25 @@
+name: "ecuador_lakehouse"
+version: "0.1.0"
+config-version: 2
+
+profile: "ecuador_lakehouse"
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  cpi_vintage: "2024-12"
+
+models:
+  ecuador_lakehouse:
+    staging:
+      +materialized: view
+      +schema: staging
+
+seeds:
+  ecuador_lakehouse:
+    +schema: staging

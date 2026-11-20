@@ -1,0 +1,40 @@
+version: 2
+
+seeds:
+  - name: ref_province
+    description: >
+      Controlled vocabulary for the 24 Ecuadorian provinces plus the SRI
+      "NO TIENE" bucket, keyed by the normalized province label (D27).
+    columns:
+      - name: province_key
+        description: Normalized province key produced by norm_key.
+        data_tests:
+          - not_null
+          - unique
+      - name: province_name
+        description: Human-readable province name with correct accents.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: ref_price_area
+    description: >
+      Controlled vocabulary of the 12 CPI price areas published by INEC:
+      national, two regions and nine cities (D27).
+    columns:
+      - name: price_area_key
+        description: Normalized price-area key produced by norm_key.
+        data_tests:
+          - not_null
+          - unique
+      - name: price_area_name
+        description: Human-readable price-area name.
+        data_tests:
+          - not_null
+          - unique
+      - name: area_kind
+        description: Area level (national, region or city).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["national", "region", "city"]
