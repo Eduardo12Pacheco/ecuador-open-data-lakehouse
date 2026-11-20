@@ -1,0 +1,90 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="kpi-grid" aria-label="Quality summary">
+  <article class="card kpi">
+    <p class="kpi-label">Tests</p>
+    <p class="kpi-value" data-kpi="tests_total">Pending</p>
+    <p class="kpi-detail" data-kpi="quality_detail"></p>
+  </article>
+  <article class="card kpi">
+    <p class="kpi-label">Raw partitions</p>
+    <p class="kpi-value" data-kpi="batches_value">Pending</p>
+    <p class="kpi-detail">Current vintages recorded in <code>meta.batches</code>.</p>
+  </article>
+  <article class="card kpi">
+    <p class="kpi-label">Rows in marts</p>
+    <p class="kpi-value" data-kpi="mart_rows">Pending</p>
+    <p class="kpi-detail">Dimensional and analytic tables in the warehouse.</p>
+  </article>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Tests by layer</h2>
+        <p class="muted">From the latest dbt <code>run_results.json</code>.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <caption class="visually-hidden">dbt tests grouped by project layer</caption>
+        <thead>
+          <tr>
+            <th scope="col">Layer</th>
+            <th scope="col" class="numeric">Total</th>
+            <th scope="col" class="numeric">Passed</th>
+            <th scope="col" class="numeric">Failed</th>
+          </tr>
+        </thead>
+        <tbody id="quality-layers"></tbody>
+      </table>
+    </div>
+  </article>
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Row counts per layer</h2>
+        <p class="muted">Exact counts read from the built warehouse.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <caption class="visually-hidden">Exact row count per warehouse table</caption>
+        <thead>
+          <tr>
+            <th scope="col">Layer</th>
+            <th scope="col">Table</th>
+            <th scope="col" class="numeric">Rows</th>
+          </tr>
+        </thead>
+        <tbody id="quality-rows"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Batch ledger</h2>
+      <p class="muted">Current partitions; a changed checksum replaces a partition atomically.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table" data-sortable>
+      <caption class="visually-hidden">Current raw-layer batches</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="sort" data-sort-key="source_id">Source</button></th>
+          <th scope="col"><button type="button" class="sort" data-sort-key="partition">Partition</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="rows">Rows</button></th>
+          <th scope="col"><button type="button" class="sort" data-sort-key="status">Status</button></th>
+          <th scope="col"><button type="button" class="sort" data-sort-key="loaded_at">Loaded at</button></th>
+        </tr>
+      </thead>
+      <tbody id="quality-batches"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="card empty-state-visible">
+  <h2>No report data yet</h2>
+  <p>The generated site has no embedded dataset to render. This page is the explicit empty state.</p>
+  <p>Build the warehouse and regenerate the report:</p>
+  <pre><code>lakehouse build
+lakehouse serve</code></pre>
+  <p><a class="button" href="index.html">Back to the overview</a></p>
+</section>
+{% endblock %}

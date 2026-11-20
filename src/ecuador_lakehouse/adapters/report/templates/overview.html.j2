@@ -1,0 +1,60 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="kpi-grid" aria-label="Key indicators">
+  <article class="card kpi">
+    <p class="kpi-label">SRI collection <span data-kpi="latest_full_year"></span></p>
+    <p class="kpi-value" data-kpi="latest_full_year_total">Pending</p>
+    <p class="kpi-detail" data-kpi="latest_full_year_detail"></p>
+  </article>
+  <article class="card kpi">
+    <p class="kpi-label">Annual inflation <span data-kpi="inflation_period"></span></p>
+    <p class="kpi-value" data-kpi="inflation_value">Pending</p>
+    <p class="kpi-detail">National CPI, year-on-year (base 2014 = 100).</p>
+  </article>
+  <article class="card kpi">
+    <p class="kpi-label">SRI collection / GDP <span data-kpi="ratio_year"></span></p>
+    <p class="kpi-value" data-kpi="ratio_value">Pending</p>
+    <p class="kpi-detail">Complete years only; BCE series ends in 2021.</p>
+  </article>
+  <article class="card kpi">
+    <p class="kpi-label">Quality gate</p>
+    <p class="kpi-value" data-kpi="tests_value">Pending</p>
+    <p class="kpi-detail" data-kpi="tests_detail"></p>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Monthly tax collection</h2>
+      <p class="muted">Nominal USD against constant 2014 USD, deflated with the national CPI.</p>
+    </div>
+    <span class="badge" data-kpi="mode"></span>
+  </div>
+  <div class="chart chart-lg" id="chart-overview-monthly" role="img"
+       aria-label="Line chart comparing nominal and real monthly tax collection"></div>
+  <p class="chart-note">Real values are unavailable after December 2024 because the CPI vintage ends there.</p>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <h2>What the quality gate proves</h2>
+    <p class="muted">Every dbt data test and unit test in the last run:</p>
+    <ul class="check-list">
+      <li><span data-kpi="tests_passed"></span> passing tests</li>
+      <li><span data-kpi="tests_failed"></span> failing tests</li>
+      <li><span data-kpi="batches_value"></span> current raw partitions in the ledger</li>
+    </ul>
+    <p><a class="button" href="quality.html">Open the quality report</a></p>
+  </article>
+  <article class="card">
+    <h2>Explore the lakehouse</h2>
+    <ul class="link-list">
+      <li><a href="tax.html">Tax collection by group, province and tax line</a></li>
+      <li><a href="prices.html">Consumer prices by city and division</a></li>
+      <li><a href="macro.html">GDP composition and the SRI-to-GDP ratio</a></li>
+      <li><a href="sources.html">Sources, licenses, checksums and lineage</a></li>
+    </ul>
+  </article>
+</section>
+{% endblock %}

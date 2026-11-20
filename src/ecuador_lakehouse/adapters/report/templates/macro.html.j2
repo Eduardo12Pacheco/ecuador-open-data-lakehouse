@@ -1,0 +1,56 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Industry composition of GDP</h2>
+      <p class="muted">Current-price gross value added by industry, in USD billions.</p>
+    </div>
+    <div class="controls">
+      <label for="macro-year">Year</label>
+      <select id="macro-year"></select>
+    </div>
+  </div>
+  <div class="chart chart-lg" id="chart-macro-industries" role="img"
+       aria-label="Horizontal bar chart of GDP composition by industry"></div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>SRI collection compared with nominal GDP</h2>
+      <p class="muted">Complete years only. The BCE national-accounts series ends in 2021Q1.</p>
+    </div>
+  </div>
+  <div class="chart chart-md" id="chart-macro-ratio" role="img"
+       aria-label="Line chart of the SRI collection to GDP ratio for complete years"></div>
+  <p class="chart-note">
+    Only 2017–2020 have four BCE quarters and twelve SRI months. Later years are shown
+    as incomplete in the table and are not plotted as a ratio.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Annual coverage</h2>
+      <p class="muted">SRI months and BCE quarters available per year.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table" data-sortable>
+      <caption class="visually-hidden">SRI collection and GDP coverage by year</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="sort" data-sort-key="year">Year</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="sri_usd">SRI collection</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="gdp_usd">Nominal GDP</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="ratio">Ratio</button></th>
+          <th scope="col"><button type="button" class="sort" data-sort-key="is_complete">Complete</button></th>
+        </tr>
+      </thead>
+      <tbody id="macro-ratios"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

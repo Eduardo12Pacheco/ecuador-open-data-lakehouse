@@ -1,0 +1,52 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="grid-2">
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>National index and inflation</h2>
+        <p class="muted">Monthly CPI index (left axis) and year-on-year change (right axis).</p>
+      </div>
+      <div class="controls">
+        <label for="price-area">Area</label>
+        <select id="price-area"></select>
+      </div>
+    </div>
+    <div class="chart chart-lg" id="chart-price-index" role="img"
+         aria-label="Line chart of the consumer price index and year-on-year inflation"></div>
+  </article>
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Division inflation</h2>
+        <p class="muted">Year-on-year change by CPI division for the latest month.</p>
+      </div>
+      <span class="badge" data-kpi="latest_month"></span>
+    </div>
+    <div class="chart chart-lg" id="chart-price-divisions" role="img"
+         aria-label="Bar chart of year-on-year inflation by CPI division"></div>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Division detail</h2>
+      <p class="muted">Latest month, sorted by year-on-year change.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table" data-sortable>
+      <caption class="visually-hidden">Latest CPI division change for the selected area</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="sort" data-sort-key="name">Division</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="yoy">Year-on-year</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="mom">Month-on-month</button></th>
+        </tr>
+      </thead>
+      <tbody id="price-divisions"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="grid-2">
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Licenses</h2>
+        <p class="muted">Only redistributable CC BY sources are bundled and published.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <caption class="visually-hidden">Source licenses</caption>
+        <thead>
+          <tr>
+            <th scope="col">Source</th>
+            <th scope="col">License</th>
+          </tr>
+        </thead>
+        <tbody id="sources-licenses"></tbody>
+      </table>
+    </div>
+    <p class="chart-note">Lockfile checked at <span data-kpi="checked_at"></span>.</p>
+  </article>
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Lineage and documentation</h2>
+        <p class="muted">Generated offline by dbt from the same project that builds the marts.</p>
+      </div>
+    </div>
+    <ul class="link-list">
+      <li><a href="lineage/index.html">dbt static documentation and model lineage</a></li>
+      <li><a href="quality.html">Quality gate results and row counts</a></li>
+      <li><a href="index.html">Back to the overview</a></li>
+    </ul>
+    <p class="chart-note">
+      Source inventory: <span data-kpi="file_count"></span> pinned files across SRI, INEC and BCE.
+    </p>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Pinned files and checksums</h2>
+      <p class="muted">SHA-256 of the upstream bytes; mutable files are refreshed by the publisher.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table" data-sortable>
+      <caption class="visually-hidden">Pinned input files with checksums and sizes</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="sort" data-sort-key="source_id">Source</button></th>
+          <th scope="col"><button type="button" class="sort" data-sort-key="partition">Partition</button></th>
+          <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="bytes">Bytes</button></th>
+          <th scope="col"><button type="button" class="sort" data-sort-key="mutable">Mutable</button></th>
+          <th scope="col">SHA-256</th>
+        </tr>
+      </thead>
+      <tbody id="sources-files"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

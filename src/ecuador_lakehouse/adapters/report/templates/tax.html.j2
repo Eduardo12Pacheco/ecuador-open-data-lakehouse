@@ -1,0 +1,58 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>Collection by tax group</h2>
+      <p class="muted">Monthly nominal USD, stacked by the SRI tax-group classification.</p>
+    </div>
+    <div class="controls" role="group" aria-label="Year range">
+      <label for="tax-from">From</label>
+      <select id="tax-from"></select>
+      <label for="tax-to">To</label>
+      <select id="tax-to"></select>
+    </div>
+  </div>
+  <div class="chart chart-lg" id="chart-tax-groups" role="img"
+       aria-label="Stacked area chart of tax collection by tax group"></div>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Collection by province</h2>
+        <p class="muted">Top provinces for the selected year (includes "Sin provincia").</p>
+      </div>
+      <div class="controls">
+        <label for="tax-province-year">Year</label>
+        <select id="tax-province-year"></select>
+      </div>
+    </div>
+    <div class="chart chart-lg" id="chart-tax-provinces" role="img"
+         aria-label="Horizontal bar chart of tax collection by province"></div>
+  </article>
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <h2>Largest tax lines</h2>
+        <p class="muted">Cumulative collection across the available years.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" data-sortable>
+        <caption class="visually-hidden">Top ten tax lines by total collection</caption>
+        <thead>
+          <tr>
+            <th scope="col"><button type="button" class="sort" data-sort-key="tax_name">Tax line</button></th>
+            <th scope="col"><button type="button" class="sort" data-sort-key="tax_group_name">Group</button></th>
+            <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="total_collected_usd">Collected (USD)</button></th>
+            <th scope="col" class="numeric"><button type="button" class="sort" data-sort-key="last_year">Last year</button></th>
+          </tr>
+        </thead>
+        <tbody id="tax-top-lines"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+{% endblock %}

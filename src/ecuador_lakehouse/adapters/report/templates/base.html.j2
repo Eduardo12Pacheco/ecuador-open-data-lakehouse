@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} | Ecuador Open Data Lakehouse</title>
+  <script>
+    (function () {
+      var key = "lakehouse-theme";
+      var theme = null;
+      try {
+        var stored = window.localStorage.getItem(key);
+        if (stored === "light" || stored === "dark") { theme = stored; }
+      } catch (error) { theme = null; }
+      if (!theme) {
+        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body data-page="{{ page }}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">EL</span>
+      <span class="brand-text">
+        <strong>Ecuador Open Data Lakehouse</strong>
+        <span class="brand-sub">{{ mode_label }}</span>
+      </span>
+    </div>
+    <nav class="site-nav" aria-label="Report sections">
+      {% for item in nav_items %}
+      <a href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+      {% endfor %}
+    </nav>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false"
+            aria-label="Switch to dark theme">Theme</button>
+  </header>
+
+  <main id="main">
+    <div class="page-head">
+      <p class="eyebrow">{{ eyebrow }}</p>
+      <h1>{{ heading }}</h1>
+      <p class="lede">{{ lede }}</p>
+    </div>
+    {% block content %}{% endblock %}
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <div id="empty-state" class="empty-state" hidden>
+      <h2>No data available</h2>
+      <p>This page could not find its embedded dataset.</p>
+      <p>Run <code>lakehouse build</code> to generate the site from the warehouse.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Data: <a href="https://www.datosabiertos.gob.ec/">SRI</a> (CC BY),
+      <a href="https://www.ecuadorencifras.gob.ec/indice-de-precios-al-consumidor-2024/">INEC</a>
+      (CC BY 4.0) and <a href="https://www.bce.ec/">BCE</a> (CC BY). Aggregated sample,
+      modifications documented in the repository.
+    </p>
+    <p>
+      <a href="sources.html">Sources and checksums</a> ·
+      <a href="lineage/index.html">dbt lineage</a> ·
+      built offline with DuckDB and dbt.
+    </p>
+  </footer>
+
+  <noscript>
+    <div class="notice" role="status">
+      The charts and tables on this page need JavaScript. The same data is embedded
+      as JSON in the <code>data-{{ page }}</code> script block of this file.
+    </div>
+  </noscript>
+
+  <script type="application/json" id="data-{{ page }}">{{ data_json|safe }}</script>
+  <script src="assets/echarts.min.js" defer></script>
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
