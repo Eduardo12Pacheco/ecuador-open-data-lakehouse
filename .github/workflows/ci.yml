@@ -85,3 +85,50 @@ jobs:
           path: test-results/e2e
           if-no-files-found: ignore
           retention-days: 7
+
+  smoke-install:
+    name: installer smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Build the wheel and sdist
+        run: uv build
+      - name: Install the wheel and run the offline quickstart
+        shell: bash
+        run: uv run python scripts/smoke.py dist/*.whl
+
+  security:
+    name: dependency audit and secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Export locked runtime requirements
+        run: uv export --no-hashes --no-emit-project > requirements.txt
+      - name: Audit locked dependencies
+        run: uvx pip-audit --disable-pip --no-deps -r requirements.txt
+      - name: Scan the full history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
