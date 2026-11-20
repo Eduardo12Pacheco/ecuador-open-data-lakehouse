@@ -69,3 +69,13 @@ services (Context: "no orchestrator service — see ADR 0006").
 - Negative: the runner is our code to maintain. Its surface is intentionally
   small (one module plus the pure DAG) and covered by unit tests and property
   tests for graph ordering/cycles.
+
+## Alternatives considered
+
+- **Dagster**: asset model, retries and a UI, but it pulls grpcio, SQLAlchemy,
+  Alembic and a daemon and expects a persistent instance; rejected for an L1
+  single-process CLI.
+- **Airflow**: mature scheduler, but it needs a scheduler, metadata database,
+  webserver and executor for one local DAG; rejected as disproportionate.
+- **A cron job or shell script**: no typed graph, no cycle detection, no run
+  ledger and no partial selection; rejected because those are explicit specs.

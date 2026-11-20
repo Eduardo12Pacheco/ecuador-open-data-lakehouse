@@ -71,7 +71,7 @@ Candidates considered:
 - The server is intentionally not a production server: single-user, loopback
   only, no authentication, no TLS. This matches the local-first constraint.
 
-## Alternatives
+## Alternatives considered
 
 - **Streamlit** rejected: heavy runtime, server requirement, limited styling.
 - **Evidence.dev** rejected: Node toolchain, generated site needs a build.

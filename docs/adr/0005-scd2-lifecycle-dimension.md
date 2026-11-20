@@ -71,3 +71,14 @@ necessarily agree if the snapshot table were reused.
 - Measured on the bundled sample: 245 natural keys, one current version per key,
   no group changes in 2017–2026, so the real-data behaviour is dominated by
   introduction/retirement/gaps as documented in D14.
+
+## Alternatives considered
+
+- **dbt snapshot (`check` strategy)**: rejected because the source has no
+  `updated_at` column, snapshots are stateful and run-history dependent, and
+  two clean builds would diverge if the snapshot table were reused. The
+  deterministic SQL model rebuilds versions from raw data instead.
+- **`row_number()`-generated surrogate keys**: rejected because row order is not
+  part of the data contract; D11 requires hash-based keys so builds agree.
+- **A hand-maintained version history seed**: rejected because it would drift
+  from the raw files and could not be property-tested against the real model.
