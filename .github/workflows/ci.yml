@@ -59,3 +59,29 @@ jobs:
       - name: Run tests (Windows and macOS)
         if: runner.os != 'Linux'
         run: uv run pytest
+
+  e2e:
+    name: browser e2e (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Install Chromium and its system dependencies
+        run: uv run playwright install --with-deps chromium
+      - name: Prepare the screenshot directory
+        run: mkdir -p test-results/e2e
+      - name: Run browser tests
+        run: uv run pytest -m e2e -q
+      - name: Upload failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-screenshots
+          path: test-results/e2e
+          if-no-files-found: ignore
+          retention-days: 7
